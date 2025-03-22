@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
-     * Portfolio filtering functionality
+     * Portfolio filtering functionality - simplified to ensure all projects are shown
      */
     function initializeFiltering() {
         const filterButtons = document.querySelectorAll('[data-filter]');
@@ -400,31 +400,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!filterButtons.length || !portfolioCards.length) return;
         
+        // Ensure all cards are visible by default
+        portfolioCards.forEach(card => {
+            card.style.display = 'block';
+            card.style.opacity = '1';
+        });
+        
+        // Add active class to the "All Projects" button
         filterButtons.forEach(button => {
+            if (button.getAttribute('data-filter') === 'all') {
+                button.classList.add('active');
+            }
+            
+            // Keep the click handler for possible future expansion, but ensure all cards stay visible
             button.addEventListener('click', function() {
-                // Remove active class from all buttons
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                
-                // Add active class to clicked button
-                this.classList.add('active');
-                
-                const filter = this.getAttribute('data-filter');
-                
-                // Filter the cards
+                // Always show all cards regardless of filter
                 portfolioCards.forEach(card => {
-                    const cardCategory = card.getAttribute('data-category') || '';
-                    
-                    if (filter === 'all' || cardCategory.includes(filter)) {
-                        card.style.display = 'block';
-                        setTimeout(() => {
-                            card.style.opacity = '1';
-                        }, 50);
-                    } else {
-                        card.style.opacity = '0';
-                        setTimeout(() => {
-                            card.style.display = 'none';
-                        }, 500);
-                    }
+                    card.style.display = 'block';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                    }, 50);
                 });
             });
         });
