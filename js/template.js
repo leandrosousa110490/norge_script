@@ -3,21 +3,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     
     // Set active class on appropriate navigation item
-    const navLinks = {
+    const pathToElement = {
         'index.html': document.getElementById('nav-home'),
         'services.html': document.getElementById('nav-services'),
         'portfolio.html': document.getElementById('nav-portfolio'),
         'about.html': document.getElementById('nav-about'),
-        'testimonials.html': document.getElementById('nav-testimonials')
+        'contact.html': document.getElementById('nav-contact')
     };
     
     // Remove any existing active classes
-    Object.values(navLinks).forEach(link => {
+    Object.values(pathToElement).forEach(link => {
         if (link) link.classList.remove('active');
     });
     
     // Add active class to current page link
-    if (navLinks[currentPage]) {
-        navLinks[currentPage].classList.add('active');
+    if (pathToElement[currentPage]) {
+        pathToElement[currentPage].classList.add('active');
     }
 }); 
