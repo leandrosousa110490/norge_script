@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function createLightbox() {
         // Check if lightbox already exists
         if (document.getElementById('portfolio-lightbox')) {
-            return;
+            return document.getElementById('portfolio-lightbox');
         }
         
         // Create lightbox elements
@@ -281,25 +281,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Keyboard navigation
-        document.addEventListener('keydown', function(e) {
-            if (!lightbox.classList.contains('active')) return;
-            
-            if (e.key === 'Escape') {
-                closeLightbox();
-            } else if (e.key === 'ArrowLeft') {
-                showPrevImage();
-            } else if (e.key === 'ArrowRight') {
-                showNextImage();
-            }
-        });
-        
         return lightbox;
     }
     
     let currentLightboxIndex = 0;
     
     function openLightbox(index) {
+        console.log(`Opening lightbox for image index: ${index}`);
         // Make sure lightbox exists
         const lightbox = createLightbox();
         
@@ -308,7 +296,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get image data
         const imageData = galleryImages[index];
-        if (!imageData) return;
+        if (!imageData) {
+            console.error('No image data found for index:', index);
+            return;
+        }
+        
+        console.log(`Loading image: ${imageData.src}`);
         
         // Get elements
         const image = lightbox.querySelector('.lightbox-image');
@@ -319,9 +312,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (galleryItem && !galleryItem.classList.contains('placeholder-img')) {
             // Use the already loaded image's src if it's not a placeholder
             image.src = galleryItem.src;
+            console.log(`Using already loaded image src: ${image.src}`);
         } else {
             // Set the correct path based on our file structure inspection
             image.src = `images/${imageData.src}`;
+            console.log(`Setting image src to: ${image.src}`);
             
             // Handle loading error
             image.onerror = function() {
@@ -332,21 +327,45 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update caption
         caption.textContent = imageData.title;
+        console.log(`Set caption to: ${imageData.title}`);
         
         // Update navigation buttons
         updateLightboxNav();
         
-        // Show lightbox
-        lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        // Reset pointer-events and ensure lightbox is visible
+        lightbox.style.pointerEvents = 'all';
+        
+        // Show lightbox - ensure it gets displayed
+        lightbox.style.display = 'flex';
+        console.log('Lightbox display set to flex');
+        
+        setTimeout(() => {
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            console.log('Lightbox activated');
+        }, 10);
     }
     
     function closeLightbox() {
+        console.log('Closing lightbox');
         const lightbox = document.getElementById('portfolio-lightbox');
-        if (!lightbox) return;
+        if (!lightbox) {
+            console.error('No lightbox found to close');
+            return;
+        }
         
+        // Remove active class first (for animation)
         lightbox.classList.remove('active');
-        document.body.style.overflow = '';
+        console.log('Removed active class from lightbox');
+        
+        // After animation completes, reset other properties
+        setTimeout(() => {
+            document.body.style.overflow = '';
+            // Don't remove from DOM, just hide it
+            lightbox.style.display = 'none';
+            lightbox.style.pointerEvents = 'none';
+            console.log('Lightbox hidden');
+        }, 300); // Match transition duration in CSS
     }
     
     function showPrevImage() {
@@ -445,4 +464,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Set up keyboard navigation - attaching to document to ensure it works no matter when lightbox is created
+    document.addEventListener('keydown', function(e) {
+        const lightbox = document.getElementById('portfolio-lightbox');
+        if (!lightbox || !lightbox.classList.contains('active')) return;
+        
+        if (e.key === 'Escape') {
+            closeLightbox();
+        } else if (e.key === 'ArrowLeft') {
+            showPrevImage();
+        } else if (e.key === 'ArrowRight') {
+            showNextImage();
+        }
+    });
 }); 
