@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - Florida Sign Solution</title>
-    <meta name="description" content="Learn about Florida Sign Solution, our history, mission, and expertise in the sign industry since 1995.">
+    <meta name="description" content="Learn about the Florida Sign Solution team, our history, and our commitment to quality signage since 1995.">
     <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="favicons/favicon.ico">
     <script src="https://kit.fontawesome.com/1234567890.js" crossorigin="anonymous"></script>
 </head>
-<body>
+<body class="inner-page">
+    <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="logo-container">
@@ -58,33 +61,6 @@
                     <p>For over 25 years, Florida Sign Solution has been a leading provider of high-quality sign services throughout Florida. Starting as a small family business in Miami, we've grown into a full-service sign company with clients across the state, while maintaining our commitment to personal service and exceptional quality.</p>
                     
                     <p>Our founder, Michael Johnson, began the company with a simple vision: to create attractive, effective signage that helps businesses succeed. That vision continues to guide us today as we leverage the latest technology and materials to deliver innovative sign solutions.</p>
-                    
-                    <h3>Our Mission</h3>
-                    <p>We are dedicated to helping businesses effectively communicate their brand message through innovative, durable, and visually striking signage solutions. Our team of experienced professionals works closely with each client to understand their unique needs and deliver signage that exceeds expectations.</p>
-                    
-                    <h3>Our Values</h3>
-                    <ul class="values-list">
-                        <li><strong>Quality:</strong> We never compromise on materials or craftsmanship</li>
-                        <li><strong>Integrity:</strong> We're honest, transparent, and accountable in all we do</li>
-                        <li><strong>Innovation:</strong> We continuously adopt new technologies and methods</li>
-                        <li><strong>Service:</strong> We're committed to exceptional customer experiences</li>
-                        <li><strong>Collaboration:</strong> We work as partners with our clients</li>
-                    </ul>
-                    
-                    <div class="stats-container">
-                        <div class="stat-box">
-                            <span class="stat-number" data-count="25">0</span>
-                            <span class="stat-label">Years Experience</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-number" data-count="1500">0</span>
-                            <span class="stat-label">Projects Completed</span>
-                        </div>
-                        <div class="stat-box">
-                            <span class="stat-number" data-count="850">0</span>
-                            <span class="stat-label">Happy Clients</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -94,49 +70,73 @@
     <section class="team">
         <div class="container">
             <div class="section-header">
-                <h2>Meet Our Team</h2>
-                <p>The skilled professionals behind our quality work</p>
+                <h3>Meet Our Team</h3>
+                <p>The skilled professionals behind Florida Sign Solution</p>
             </div>
-            <div class="team-grid">
+            <div class="team-members">
                 <div class="team-member">
-                    <div class="member-image">
-                        <img src="images/team/member1.jpg" alt="Michael Johnson">
-                    </div>
-                    <div class="member-info">
-                        <h3>Michael Johnson</h3>
-                        <p class="member-title">Founder & CEO</p>
-                        <p class="member-bio">With over 30 years in the sign industry, Michael's expertise and vision guide our company's direction and standards.</p>
-                    </div>
+                    <img src="images/team/michael-johnson.jpg" alt="Michael Johnson - Founder">
+                    <h4>Michael Johnson</h4>
+                    <p class="position">Founder & CEO</p>
+                    <p>With over 30 years of experience in the sign industry, Michael oversees all operations and continues to be involved in client consultations for major projects.</p>
                 </div>
                 <div class="team-member">
-                    <div class="member-image">
-                        <img src="images/team/member2.jpg" alt="Sarah Martinez">
-                    </div>
-                    <div class="member-info">
-                        <h3>Sarah Martinez</h3>
-                        <p class="member-title">Design Director</p>
-                        <p class="member-bio">Sarah leads our design team with her creative approach and deep understanding of branding and visual communication.</p>
-                    </div>
+                    <img src="images/team/jennifer-lopez.jpg" alt="Jennifer Lopez - Design Director">
+                    <h4>Jennifer Lopez</h4>
+                    <p class="position">Design Director</p>
+                    <p>Jennifer leads our creative team, bringing 15 years of graphic design expertise and a passion for creating impactful visual communication through signage.</p>
                 </div>
                 <div class="team-member">
-                    <div class="member-image">
-                        <img src="images/team/member3.jpg" alt="Robert Williams">
-                    </div>
-                    <div class="member-info">
-                        <h3>Robert Williams</h3>
-                        <p class="member-title">Production Manager</p>
-                        <p class="member-bio">Robert oversees all manufacturing processes, ensuring every sign meets our rigorous quality standards.</p>
-                    </div>
+                    <img src="images/team/robert-smith.jpg" alt="Robert Smith - Production Manager">
+                    <h4>Robert Smith</h4>
+                    <p class="position">Production Manager</p>
+                    <p>Robert ensures all signs are manufactured to the highest standards, managing our production team and implementing quality control processes.</p>
                 </div>
                 <div class="team-member">
-                    <div class="member-image">
-                        <img src="images/team/member4.jpg" alt="Jennifer Taylor">
+                    <img src="images/team/sarah-wilson.jpg" alt="Sarah Wilson - Installation Supervisor">
+                    <h4>Sarah Wilson</h4>
+                    <p class="position">Installation Supervisor</p>
+                    <p>Sarah coordinates our installation crews and oversees all on-site work, ensuring safe, efficient, and professional sign installations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values">
+        <div class="container">
+            <div class="section-header">
+                <h3>Our Core Values</h3>
+                <p>The principles that guide our work and relationships</p>
+            </div>
+            <div class="values-container">
+                <div class="value-item">
+                    <div class="value-icon">
+                        <i class="fas fa-medal"></i>
                     </div>
-                    <div class="member-info">
-                        <h3>Jennifer Taylor</h3>
-                        <p class="member-title">Installation Team Lead</p>
-                        <p class="member-bio">Jennifer coordinates our installation crews and ensures all projects are completed safely and efficiently.</p>
+                    <h4>Quality Craftsmanship</h4>
+                    <p>We take pride in the details, using premium materials and skilled craftsmanship to create signs that stand the test of time.</p>
+                </div>
+                <div class="value-item">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
                     </div>
+                    <h4>Customer Partnership</h4>
+                    <p>We build lasting relationships with our clients through transparent communication and a collaborative approach to every project.</p>
+                </div>
+                <div class="value-item">
+                    <div class="value-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h4>Innovative Solutions</h4>
+                    <p>We continuously explore new technologies and materials to offer our clients the most effective and efficient signage solutions.</p>
+                </div>
+                <div class="value-item">
+                    <div class="value-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h4>Environmental Responsibility</h4>
+                    <p>We strive to minimize our environmental impact through sustainable practices and eco-friendly material options.</p>
                 </div>
             </div>
         </div>
@@ -146,61 +146,30 @@
     <section class="certifications">
         <div class="container">
             <div class="section-header">
-                <h2>Our Certifications</h2>
-                <p>We maintain the highest industry standards</p>
+                <h3>Our Certifications & Memberships</h3>
+                <p>Recognized for our commitment to quality and professionalism</p>
             </div>
-            <div class="certification-list">
-                <div class="certification-item">
-                    <div class="cert-icon">
-                        <i class="fas fa-certificate"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h3>International Sign Association</h3>
-                        <p>Member in good standing</p>
-                    </div>
-                </div>
-                <div class="certification-item">
-                    <div class="cert-icon">
-                        <i class="fas fa-certificate"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h3>Florida Sign Association</h3>
-                        <p>Certified Member</p>
-                    </div>
-                </div>
-                <div class="certification-item">
-                    <div class="cert-icon">
-                        <i class="fas fa-certificate"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h3>UL Listed</h3>
-                        <p>Electrical sign compliance</p>
-                    </div>
-                </div>
-                <div class="certification-item">
-                    <div class="cert-icon">
-                        <i class="fas fa-certificate"></i>
-                    </div>
-                    <div class="cert-info">
-                        <h3>Better Business Bureau</h3>
-                        <p>A+ Rating</p>
-                    </div>
-                </div>
+            <div class="certification-logos">
+                <img src="images/certifications/isa-member.png" alt="International Sign Association Member">
+                <img src="images/certifications/ussc-certified.png" alt="United States Sign Council Certified">
+                <img src="images/certifications/florida-licensed.png" alt="Florida Licensed Sign Contractor">
+                <img src="images/certifications/bbb-accredited.png" alt="Better Business Bureau Accredited Business">
             </div>
         </div>
     </section>
 
     <!-- CTA Section -->
-    <section class="cta-section">
+    <section class="cta">
         <div class="container">
             <div class="cta-content">
-                <h2>Let's Work Together</h2>
-                <p>Partner with us for all your signage needs</p>
-                <a href="contact.html" class="btn btn-primary">Contact Our Team</a>
+                <h3>Ready to Discuss Your Sign Project?</h3>
+                <p>Contact our team today for a consultation and free quote</p>
+                <a href="contact.html" class="btn btn-primary">Get in Touch</a>
             </div>
         </div>
     </section>
 
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -219,7 +188,7 @@
                         <li><a href="contact.html">Contact Us</a></li>
                     </ul>
                 </div>
-                <div class="footer-services">
+                <div class="footer-links">
                     <h3>Our Services</h3>
                     <ul>
                         <li><a href="services.html#design">Sign Design</a></li>
@@ -254,6 +223,7 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html> 

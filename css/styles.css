@@ -222,6 +222,13 @@ section {
     transition: all var(--transition-fast);
 }
 
+/* Ensure consistent header styling across all pages */
+body:not(.home) .header,
+body .header {
+    background-color: var(--white);
+    box-shadow: var(--shadow-sm);
+}
+
 .header.scrolled {
     padding: 0.5rem 0;
     background-color: rgba(255, 255, 255, 0.95);
@@ -301,7 +308,8 @@ section {
     background-color: var(--primary-dark);
 }
 
-.nav-links a.cta-button:after {
+.nav-links a.cta-button:after,
+.nav-links a.cta-button.active:after {
     display: none;
 }
 
@@ -1090,10 +1098,9 @@ section {
 
 /* Inner pages styling */
 .page-header {
-    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../images/page-header-bg.jpg') no-repeat center center;
-    background-size: cover;
+    background-color: var(--light-gray);
     padding: var(--spacing-lg) 0;
-    color: var(--white);
+    color: var(--primary-color);
     text-align: center;
     position: relative;
     margin-top: 80px; /* Add margin to account for fixed header */
@@ -1104,12 +1111,14 @@ section {
     margin-bottom: var(--spacing-sm);
     text-transform: uppercase;
     letter-spacing: 1px;
+    color: var(--primary-color);
 }
 
 .page-header p {
     font-size: 1.2rem;
     max-width: 600px;
     margin: 0 auto;
+    color: var(--dark-gray);
 }
 
 .section-intro {
