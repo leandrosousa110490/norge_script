@@ -51,11 +51,19 @@
     position: relative;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.4s ease, box-shadow 0.4s ease, opacity 0.6s ease;
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+    transition-delay: calc(var(--item-index) * 0.1s);
+}
+
+.gallery-item.animate-visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
 }
 
 .gallery-item:hover {
-    transform: translateY(-5px);
+    transform: translateY(-5px) scale(1.02);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -63,7 +71,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: transform 0.6s ease;
 }
 
 .gallery-item:hover .gallery-img {
@@ -79,7 +87,7 @@
     color: white;
     padding: 10px 15px;
     transform: translateY(100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease;
 }
 
 .gallery-item:hover .gallery-item-caption {
@@ -108,11 +116,14 @@
     cursor: pointer;
     z-index: 5;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    opacity: 0.8;
 }
 
 .gallery-nav:hover {
     background: #004494; /* Darker shade for hover */
+    transform: translateY(-50%) scale(1.1);
+    opacity: 1;
 }
 
 .prev-btn {
@@ -135,12 +146,26 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .lightbox-content {
     position: relative;
     max-width: 90%;
     max-height: 90%;
+    animation: lightboxEnter 0.4s forwards;
+}
+
+@keyframes lightboxEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .lightbox-content img {
@@ -148,6 +173,7 @@
     max-height: 80vh;
     display: block;
     border: 2px solid white;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
 }
 
 .lightbox-close {
@@ -161,6 +187,11 @@
     color: white;
     font-size: 30px;
     cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.lightbox-close:hover {
+    transform: rotate(90deg);
 }
 
 .lightbox-caption {
@@ -172,6 +203,20 @@
     color: white;
     padding: 10px;
     text-align: center;
+    animation: fadeInUp 0.5s forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Responsive adjustments */
@@ -179,6 +224,7 @@
     .gallery-item {
         flex: 0 0 240px;
         height: 240px;
+        transition-delay: calc(var(--item-index) * 0.05s);
     }
     
     .project-gallery-container {

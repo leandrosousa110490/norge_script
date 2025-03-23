@@ -30,10 +30,11 @@ function initProjectGallery() {
         { src: 'images/about33.jpg', alt: 'Sign Project 12', title: 'Directory Signs' }
     ];
     
-    // Create gallery items
-    galleryImages.forEach(image => {
+    // Create gallery items with animation delay
+    galleryImages.forEach((image, index) => {
         const galleryItem = document.createElement('div');
         galleryItem.className = 'gallery-item';
+        galleryItem.style.setProperty('--item-index', index);
         galleryItem.innerHTML = `
             <img src="${image.src}" alt="${image.alt}" class="gallery-img">
             <div class="gallery-item-caption">
@@ -42,6 +43,16 @@ function initProjectGallery() {
         `;
         galleryContainer.appendChild(galleryItem);
     });
+    
+    // Add animation to newly loaded items
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    
+    // Animate items once page has loaded
+    setTimeout(() => {
+        galleryItems.forEach(item => {
+            item.classList.add('animate-visible');
+        });
+    }, 300);
     
     // Handle navigation functionality
     let scrollAmount = 0;
@@ -83,8 +94,6 @@ function initProjectGallery() {
     });
     
     // Add lightbox functionality
-    const galleryItems = document.querySelectorAll('.gallery-item');
-    
     galleryItems.forEach(item => {
         item.addEventListener('click', function() {
             const imgSrc = this.querySelector('img').getAttribute('src');
@@ -98,7 +107,7 @@ function initProjectGallery() {
             lightbox.innerHTML = `
                 <div class="lightbox-content">
                     <button class="lightbox-close">&times;</button>
-                    <img src="${imgSrc}" alt="${imgAlt}">
+                    <img src="${imgSrc}" alt="${imgAlt}" class="animate-on-scroll animate-visible">
                     <div class="lightbox-caption">
                         <h5>${imgTitle}</h5>
                     </div>
@@ -107,20 +116,31 @@ function initProjectGallery() {
             
             document.body.appendChild(lightbox);
             
+            // Animate lightbox entrance
+            setTimeout(() => {
+                lightbox.style.opacity = "1";
+            }, 10);
+            
             // Prevent page scrolling when lightbox is open
             document.body.style.overflow = 'hidden';
             
             // Handle close button click
             lightbox.querySelector('.lightbox-close').addEventListener('click', function() {
-                document.body.removeChild(lightbox);
-                document.body.style.overflow = '';
+                lightbox.style.opacity = "0";
+                setTimeout(() => {
+                    document.body.removeChild(lightbox);
+                    document.body.style.overflow = '';
+                }, 300);
             });
             
             // Close lightbox when clicking outside the image
             lightbox.addEventListener('click', function(e) {
                 if (e.target === lightbox) {
-                    document.body.removeChild(lightbox);
-                    document.body.style.overflow = '';
+                    lightbox.style.opacity = "0";
+                    setTimeout(() => {
+                        document.body.removeChild(lightbox);
+                        document.body.style.overflow = '';
+                    }, 300);
                 }
             });
         });
