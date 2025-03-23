@@ -1207,11 +1207,12 @@ body .header {
 
 /* CTA Section styling */
 .cta-section {
-    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../images/cta-bg.jpg') no-repeat center center;
-    background-size: cover;
+    background: #ffffff;
     padding: var(--spacing-xl) 0;
-    color: var(--white);
+    color: var(--dark);
     text-align: center;
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+    margin: 2rem 0;
 }
 
 .cta-content {
@@ -1223,12 +1224,13 @@ body .header {
 .cta-content h2 {
     font-size: 2.5rem;
     margin-bottom: var(--spacing-sm);
-    color: var(--white);
+    color: var(--dark);
 }
 
 .cta-content p {
     font-size: 1.2rem;
     margin-bottom: var(--spacing-md);
+    color: var(--dark);
 }
 
 .cta-content .btn {
