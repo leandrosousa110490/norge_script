@@ -935,6 +935,13 @@ body .header {
     transition: all 0.3s;
     border: none;
     z-index: 999;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#scrollToTop i {
+    font-size: 1.25rem;
+    color: var(--white);
+    display: block;
 }
 
 #scrollToTop.visible {

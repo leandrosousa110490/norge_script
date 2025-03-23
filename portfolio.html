@@ -3,62 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Portfolio - Florida Sign Solution</title>
-    <meta name="description" content="View our portfolio of sign design, fabrication, and installation projects across Florida.">
-    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Primary Meta Tags -->
+    <title>Portfolio - Florida Sign Solution</title>
+    <meta name="title" content="Our Sign Portfolio | Custom Sign Projects in Florida">
+    <meta name="description" content="Browse our portfolio of custom sign projects including storefront signs, channel letters, LED displays, and monument signs for businesses across Florida.">
+    <meta name="keywords" content="sign portfolio, custom signs florida, business sign projects, storefront sign examples, channel letter projects, LED sign installations, monument sign portfolio, miami sign projects, florida sign solution projects">
+    <meta name="author" content="Florida Sign Solution">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="7 days">
+    <meta name="geo.region" content="US-FL">
+    <meta name="geo.placename" content="Miami">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://floridasignsolution.com/portfolio.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://floridasignsolution.com/portfolio.html">
+    <meta property="og:title" content="Our Sign Portfolio | Custom Sign Projects in Florida">
+    <meta property="og:description" content="Browse our portfolio of custom sign projects including storefront signs, channel letters, LED displays, and monument signs for businesses across Florida.">
+    <meta property="og:image" content="images/logo.png">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Florida Sign Solution">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://floridasignsolution.com/portfolio.html">
+    <meta property="twitter:title" content="Our Sign Portfolio | Custom Sign Projects in Florida">
+    <meta property="twitter:description" content="Browse our portfolio of custom sign projects including storefront signs, channel letters, LED displays, and monument signs for businesses across Florida.">
+    <meta property="twitter:image" content="images/logo.png">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="favicons/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicons/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicons/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="favicons/android-chrome-512x512.png">
+    <link rel="mask-icon" href="favicons/safari-pinned-tab.svg" color="#3498db">
+    <meta name="msapplication-TileColor" content="#3498db">
+    <meta name="msapplication-TileImage" content="favicons/mstile-144x144.png">
+    <meta name="theme-color" content="#3498db">
+    <link rel="manifest" href="site.webmanifest">
+    
+    <!-- Stylesheets -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/lightbox.css">
+    <link rel="stylesheet" href="css/portfolio-gallery.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" href="favicons/favicon.ico">
-    <link rel="stylesheet" href="css/portfolio-gallery.css">
-    <link rel="stylesheet" href="static/css/portfolio-gallery.css">
     <script src="https://kit.fontawesome.com/1234567890.js" crossorigin="anonymous"></script>
+    
     <style>
-        /* Ensure proper gallery styling */
-        .project-gallery {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            overflow-x: auto !important;
-            scroll-behavior: smooth;
-            width: 100%;
-            gap: 20px;
-            padding: 20px;
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
         }
-        .gallery-item {
-            flex: 0 0 auto !important;
-            min-width: 280px !important;
-            height: 350px !important;
-            margin-bottom: 0 !important;
+        .toast {
+            min-width: 250px;
+        }
+        #brand-logo {
+            font-weight: 700;
+            transition: font-size 0.3s ease;
+            color: #3498db;
+        }
+        .font-control-buttons button {
+            font-weight: bold;
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+        }
+        .navbar-brand img {
+            margin-right: 10px;
+            height: 40px;
+        }
+        .navbar {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1000;
         }
     </style>
 </head>
 <body class="inner-page">
-    <header class="header">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
-            <div class="logo-container">
-                <img src="images/logo.png" alt="Florida Sign Solution Logo" class="logo">
-                <div class="logo-text">
-                    <h1>Florida Sign Solution</h1>
-                    <p class="tagline">Building Quality Signs Since 1995</p>
+            <!-- Brand with logo always visible -->
+            <a class="navbar-brand fs-3" id="brand-logo" href="index.html">
+                <img src="images/logo.png" alt="Florida Sign Solution Logo">
+                Florida Sign Solution
+            </a>
+            
+            <!-- Hamburger menu for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Collapsible content -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="ms-auto nav-and-contact">
+                    <!-- Navigation links -->
+                    <ul class="navbar-nav mb-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="services.html">
+                                <i class="bi bi-tools me-1"></i> Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="portfolio.html">
+                                <i class="bi bi-images me-1"></i> Portfolio
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="about.html">
+                                <i class="bi bi-info-circle me-1"></i> About Us
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="contact.html">
+                                <i class="bi bi-envelope me-1"></i> Contact
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Contact info for desktop view -->
+                    <div class="d-none d-lg-flex justify-content-end align-items-center contact-info-row contact-position-adjustment">
+                        <a href="tel:+7863932372" class="contact-link me-3">
+                            <i class="bi bi-telephone-fill me-1"></i>
+                            (786) 393-2372
+                        </a>
+                        <a href="mailto:floridasignsolution@gmail.com" class="contact-link">
+                            <i class="bi bi-envelope-fill me-1"></i>
+                            floridasignsolution@gmail.com
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Contact info for mobile view -->
+                <div class="d-lg-none mt-3">
+                    <a href="tel:+7863932372" class="contact-link mb-2 d-block">
+                        <i class="bi bi-telephone-fill me-1"></i>
+                        (786) 393-2372
+                    </a>
+                    <a href="mailto:floridasignsolution@gmail.com" class="contact-link d-block">
+                        <i class="bi bi-envelope-fill me-1"></i>
+                        floridasignsolution@gmail.com
+                    </a>
                 </div>
             </div>
-            <nav class="main-nav">
-                <button class="mobile-toggle" aria-label="Toggle navigation">
-                    <span class="hamburger"></span>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="services.html">Services</a></li>
-                    <li><a href="portfolio.html" class="active">Portfolio</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="contact.html" class="cta-button">Contact Us</a></li>
-                </ul>
-            </nav>
         </div>
-    </header>
+    </nav>
 
     <!-- Page Header -->
     <section class="page-header">
@@ -229,49 +331,86 @@
         </div>
     </section>
 
-    <footer class="footer">
+    <!-- Footer -->
+    <footer class="bg-dark text-white pt-5 pb-4 mt-5">
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <img src="images/logo.png" alt="Florida Sign Solution Logo">
-                    <p>Florida Sign Solution</p>
+            <div class="row">
+                <!-- Company Info -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">Florida Sign Solution</h5>
+                    <p class="mb-4">Your trusted partner for professional sign installation, repair, and development services across Florida since 2005.</p>
+                    <p class="mb-1"><i class="bi bi-geo-alt-fill me-2"></i>Miami, Florida</p>
+                    <p class="mb-1"><i class="bi bi-telephone-fill me-2"></i>(786) 393-2372</p>
+                    <p><i class="bi bi-envelope-fill me-2"></i>floridasignsolution@gmail.com</p>
                 </div>
-                <div class="footer-links">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="services.html">Services</a></li>
-                        <li><a href="portfolio.html">Portfolio</a></li>
-                        <li><a href="about.html">About Us</a></li>
-                        <li><a href="contact.html">Contact Us</a></li>
+                
+                <!-- Quick Links -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="index.html" class="text-white text-decoration-none"><i class="bi bi-chevron-right me-2"></i>Home</a></li>
+                        <li class="mb-2"><a href="services.html" class="text-white text-decoration-none"><i class="bi bi-chevron-right me-2"></i>Services</a></li>
+                        <li class="mb-2"><a href="portfolio.html" class="text-white text-decoration-none"><i class="bi bi-chevron-right me-2"></i>Portfolio</a></li>
+                        <li class="mb-2"><a href="about.html" class="text-white text-decoration-none"><i class="bi bi-chevron-right me-2"></i>About Us</a></li>
+                        <li><a href="contact.html" class="text-white text-decoration-none"><i class="bi bi-chevron-right me-2"></i>Contact</a></li>
                     </ul>
                 </div>
-                <div class="footer-services">
-                    <h3>Our Services</h3>
-                    <ul>
-                        <li><a href="services.html#design">Sign Design</a></li>
-                        <li><a href="services.html#fabrication">Sign Fabrication</a></li>
-                        <li><a href="services.html#installation">Sign Installation</a></li>
-                        <li><a href="services.html#repair">Sign Repair</a></li>
-                        <li><a href="services.html#led">LED Conversion</a></li>
-                        <li><a href="services.html#maintenance">Sign Maintenance</a></li>
+                
+                <!-- Services -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">Our Services</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="services.html#design" class="text-white text-decoration-none"><i class="bi bi-check2-circle me-2"></i>Sign Design</a></li>
+                        <li class="mb-2"><a href="services.html#fabrication" class="text-white text-decoration-none"><i class="bi bi-check2-circle me-2"></i>Sign Fabrication</a></li>
+                        <li class="mb-2"><a href="services.html#installation" class="text-white text-decoration-none"><i class="bi bi-check2-circle me-2"></i>Sign Installation</a></li>
+                        <li class="mb-2"><a href="services.html#repair" class="text-white text-decoration-none"><i class="bi bi-check2-circle me-2"></i>Sign Repair</a></li>
+                        <li><a href="services.html#maintenance" class="text-white text-decoration-none"><i class="bi bi-check2-circle me-2"></i>Sign Maintenance</a></li>
                     </ul>
                 </div>
-                <div class="footer-newsletter">
-                    <h3>Newsletter</h3>
-                    <p>Subscribe to our newsletter for the latest updates and offers</p>
-                    <form class="newsletter-form">
-                        <input type="email" placeholder="Your Email Address" required>
-                        <button type="submit" aria-label="Subscribe"><i class="fas fa-paper-plane"></i></button>
-                    </form>
+                
+                <!-- Connect With Us -->
+                <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                    <h5 class="text-uppercase mb-4">Connect With Us</h5>
+                    <p class="mb-4">Follow us on social media for the latest updates, projects, and promotions.</p>
+                    <div class="d-flex">
+                        <a href="https://www.instagram.com/floridasignsolution?igsh=b2h5bHlhYW1lNm5u" target="_blank" class="me-3">
+                            <div style="background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center;">
+                                <i class="bi bi-instagram text-white" style="font-size: 24px;"></i>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2023 Florida Sign Solution. All Rights Reserved.</p>
-                <div class="footer-bottom-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Sitemap</a>
+            
+            <!-- Business Hours -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5 class="text-uppercase mb-3">Business Hours</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <p class="mb-1"><strong>Monday - Friday:</strong> 8:00 AM - 6:00 PM</p>
+                        </div>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <p class="mb-1"><strong>Saturday:</strong> Closed</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1"><strong>Sunday:</strong> Closed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <!-- Copyright -->
+            <div class="row align-items-center">
+                <div class="col-md-7 col-lg-8">
+                    <p class="mb-md-0">© 2025 Florida Sign Solution. All rights reserved. <a href="#" class="text-white text-decoration-none">Privacy Policy</a> | <a href="#" class="text-white text-decoration-none">Terms of Service</a></p>
+                </div>
+                <div class="col-md-5 col-lg-4">
+                    <div class="text-md-end">
+                        <p class="mb-0">Licensed & Insured | FL License</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,7 +421,7 @@
     </button>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/portfolio-gallery.js"></script>
     <script src="js/main.js"></script>
-    <script src="static/js/portfolio-gallery.js"></script>
 </body>
 </html> 
