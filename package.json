@@ -1,0 +1,17 @@
+{
+  "name": "norge_script",
+  "version": "1.0.0",
+  "description": "A responsive, modern website for Florida Sign Solution, a company specializing in sign building, repair, and installation services.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "clean-css-cli": "^5.6.3",
+    "live-server": "^1.2.2",
+    "uglify-js": "^3.19.3"
+  }
+}

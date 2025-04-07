@@ -24,7 +24,7 @@
     <meta property="og:url" content="https://floridasignsolution.com/about.html">
     <meta property="og:title" content="About Us - Florida Sign Solution | Father-Son Sign Company in Miami FL">
     <meta property="og:description" content="Learn about the Florida Sign Solution team, our history, and our commitment to quality signage since 2005. A father-son family business serving all of Florida.">
-    <meta property="og:image" content="images/logo.png">
+    <meta property="og:image" content="https://floridasignsolution.com/images/logo1.png">
     <meta property="og:locale" content="en_US">
     <meta property="og:site_name" content="Florida Sign Solution">
     
@@ -33,7 +33,7 @@
     <meta property="twitter:url" content="https://floridasignsolution.com/about.html">
     <meta property="twitter:title" content="About Us - Florida Sign Solution | Father-Son Sign Company in Miami FL">
     <meta property="twitter:description" content="Learn about the Florida Sign Solution team, our history, and our commitment to quality signage since 2005. A father-son family business serving all of Florida.">
-    <meta property="twitter:image" content="images/logo.png">
+    <meta property="twitter:image" content="https://floridasignsolution.com/images/logo1.png">
     
     <!-- Favicons -->
     <link rel="icon" href="favicons/favicon.ico" type="image/x-icon">
@@ -60,6 +60,109 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "Florida Sign Solution",
+        "image": "https://floridasignsolution.com/images/logo1.png",
+        "logo": "https://floridasignsolution.com/images/logo1.png",
+        "@id": "https://floridasignsolution.com",
+        "url": "https://floridasignsolution.com",
+        "telephone": "+17863932372",
+        "email": "floridasignsolution@gmail.com",
+        "priceRange": "$$",
+        "description": "Family-owned sign company in Miami offering professional sign installation, repair, and design services throughout Florida. Quality signage solutions for businesses since 2005.",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "123 Sign Street",
+            "addressLocality": "Miami",
+            "addressRegion": "FL",
+            "postalCode": "33101",
+            "addressCountry": "US"
+        },
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 25.7617,
+            "longitude": -80.1918
+        },
+        "openingHoursSpecification": [
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "opens": "08:00",
+                "closes": "18:00"
+            },
+            {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": "Saturday",
+                "opens": "09:00", 
+                "closes": "14:00"
+            }
+        ],
+        "sameAs": [
+            "https://www.facebook.com/floridasignsolutions",
+            "https://www.instagram.com/floridasignsolutions",
+            "https://twitter.com/floridasigns"
+        ],
+        "areaServed": {
+            "@type": "State",
+            "name": "Florida"
+        },
+        "serviceArea": {
+            "@type": "GeoCircle",
+            "geoMidpoint": {
+                "@type": "GeoCoordinates",
+                "latitude": 27.6648,
+                "longitude": -81.5158
+            },
+            "geoRadius": "350000"
+        },
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Sign Services",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Sign Installation"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Sign Repair"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Sign Development"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Sign Permitting"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Graphic Design"
+                    }
+                }
+            ]
+        }
+    }
+    </script>
+    
     <style>
         .toast-container {
             position: fixed;
@@ -74,6 +177,7 @@
             font-weight: 700;
             transition: font-size 0.3s ease;
             color: #3498db;
+            line-height: 1.2;
         }
         .font-control-buttons button {
             font-weight: bold;
@@ -81,12 +185,29 @@
         .navbar-brand {
             display: flex;
             align-items: center;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
         }
         .navbar-brand img {
-            margin-right: 10px;
-            height: 40px;
+            margin-right: 12px;
+            height: 45px;
+            vertical-align: middle;
+        }
+        .navbar {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1000;
         }
     </style>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
 </head>
 <body class="inner-page">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
