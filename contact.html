@@ -53,8 +53,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/lightbox.css">
     <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/sign-game.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -286,173 +286,264 @@
         </div>
     </section>
 
-    <!-- Enhanced Contact Information Section -->
-    <div class="container mt-5">
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Frequently Asked Questions</h5>
-                        
-                        <div class="accordion mt-3" id="faqAccordion">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="faqHeading1">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="false" aria-controls="faqCollapse1">
-                                        How long does it take to create and install a sign?
-                                    </button>
-                                </h2>
-                                <div id="faqCollapse1" class="accordion-collapse collapse" aria-labelledby="faqHeading1" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        The timeline depends on the complexity and size of your sign. Simple signs may take 1-2 weeks, while larger custom projects could take 3-4 weeks from design approval to installation. We'll provide you with a specific timeline during your consultation.
+    <!-- Main content of the page -->
+    <section class="page-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <!-- Contact Form Section (existing) -->
+                    <div class="row mt-5">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Frequently Asked Questions</h5>
+                                    
+                                    <div class="accordion mt-3" id="faqAccordion">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faqHeading1">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="false" aria-controls="faqCollapse1">
+                                                    How long does it take to create and install a sign?
+                                                </button>
+                                            </h2>
+                                            <div id="faqCollapse1" class="accordion-collapse collapse" aria-labelledby="faqHeading1" data-bs-parent="#faqAccordion">
+                                                <div class="accordion-body">
+                                                    The timeline depends on the complexity and size of your sign. Simple signs may take 1-2 weeks, while larger custom projects could take 3-4 weeks from design approval to installation. We'll provide you with a specific timeline during your consultation.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faqHeading2">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
+                                                    Do you provide maintenance services for existing signs?
+                                                </button>
+                                            </h2>
+                                            <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#faqAccordion">
+                                                <div class="accordion-body">
+                                                    Yes, we offer comprehensive maintenance services including repairs, LED replacement, cleaning, and refurbishing. We service all types of signs, even if we didn't originally install them.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faqHeading3">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
+                                                    What areas do you service in Florida?
+                                                </button>
+                                            </h2>
+                                            <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#faqAccordion">
+                                                <div class="accordion-body">
+                                                    We service all major cities across Florida including Miami, Fort Lauderdale, Orlando, Tampa, and Jacksonville. Contact us for specific information about your location.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faqHeading4">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
+                                                    Do you handle permitting for sign installation?
+                                                </button>
+                                            </h2>
+                                            <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#faqAccordion">
+                                                <div class="accordion-body">
+                                                    Yes, we handle all necessary permitting and ensure your signs meet local regulations and codes. Our team is experienced with the requirements across different Florida municipalities.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faqHeading5">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
+                                                    How much does it cost?
+                                                </button>
+                                            </h2>
+                                            <div id="faqCollapse5" class="accordion-collapse collapse" aria-labelledby="faqHeading5" data-bs-parent="#faqAccordion">
+                                                <div class="accordion-body">
+                                                    Pricing varies based on the type, size, materials, and complexity of your signage project. We offer competitive rates starting from $500 for basic signs up to custom solutions for larger projects. Contact us for a detailed quote tailored to your specific requirements.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="faqHeading6">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse6" aria-expanded="false" aria-controls="faqCollapse6">
+                                                    What types of signs do you offer?
+                                                </button>
+                                            </h2>
+                                            <div id="faqCollapse6" class="accordion-collapse collapse" aria-labelledby="faqHeading6" data-bs-parent="#faqAccordion">
+                                                <div class="accordion-body">
+                                                    We offer a comprehensive range of signage solutions including channel letters, monument signs, pylon signs, LED displays, dimensional letters, building signs, wayfinding systems, ADA compliant signs, vinyl graphics, vehicle wraps, and digital displays. Our experts can help you determine the best type of sign for your specific business needs and location.
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    
                                 </div>
                             </div>
-                            
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="faqHeading2">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
-                                        Do you provide maintenance services for existing signs?
-                                    </button>
-                                </h2>
-                                <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Yes, we offer comprehensive maintenance services including repairs, LED replacement, cleaning, and refurbishing. We service all types of signs, even if we didn't originally install them.
-                                    </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Contact Information</h5>
+                                    <p>
+                                        <strong><i class="bi bi-geo-alt-fill text-primary me-2"></i>Address:</strong><br>
+                                        Miami, Florida
+                                    </p>
+                                    <p>
+                                        <strong><i class="bi bi-telephone-fill text-primary me-2"></i>Phone:</strong><br>
+                                        <a href="tel:+17863932372" class="text-decoration-none">(786) 393-2372</a>
+                                    </p>
+                                    <p>
+                                        <strong><i class="bi bi-envelope-fill text-primary me-2"></i>Email:</strong><br>
+                                        <a href="mailto:floridasignsolution@gmail.com" class="text-decoration-none">floridasignsolution@gmail.com</a>
+                                    </p>
+                                    <p>
+                                        <strong><i class="bi bi-clock-fill text-primary me-2"></i>Business Hours:</strong><br>
+                                        Monday - Friday: 8:00 AM - 6:00 PM<br>
+                                        Saturday: Closed<br>
+                                        Sunday: Closed
+                                    </p>
                                 </div>
                             </div>
-                            
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="faqHeading3">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
-                                        What areas do you service in Florida?
-                                    </button>
-                                </h2>
-                                <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        We service all major cities across Florida including Miami, Fort Lauderdale, Orlando, Tampa, and Jacksonville. Contact us for specific information about your location.
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="faqHeading4">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
-                                        Do you handle permitting for sign installation?
-                                    </button>
-                                </h2>
-                                <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Yes, we handle all necessary permitting and ensure your signs meet local regulations and codes. Our team is experienced with the requirements across different Florida municipalities.
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="faqHeading5">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse5" aria-expanded="false" aria-controls="faqCollapse5">
-                                        How much does it cost?
-                                    </button>
-                                </h2>
-                                <div id="faqCollapse5" class="accordion-collapse collapse" aria-labelledby="faqHeading5" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        Pricing varies based on the type, size, materials, and complexity of your signage project. We offer competitive rates starting from $500 for basic signs up to custom solutions for larger projects. Contact us for a detailed quote tailored to your specific requirements.
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="faqHeading6">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse6" aria-expanded="false" aria-controls="faqCollapse6">
-                                        What types of signs do you offer?
-                                    </button>
-                                </h2>
-                                <div id="faqCollapse6" class="accordion-collapse collapse" aria-labelledby="faqHeading6" data-bs-parent="#faqAccordion">
-                                    <div class="accordion-body">
-                                        We offer a comprehensive range of signage solutions including channel letters, monument signs, pylon signs, LED displays, dimensional letters, building signs, wayfinding systems, ADA compliant signs, vinyl graphics, vehicle wraps, and digital displays. Our experts can help you determine the best type of sign for your specific business needs and location.
+                        </div>
+                    </div>
+
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h2 class="card-title text-center mb-4">Why Choose Florida Sign Solution?</h2>
+                                    <div class="row g-4">
+                                        <div class="col-md-4">
+                                            <div class="text-center mb-3">
+                                                <i class="bi bi-trophy-fill text-primary" style="font-size: 2.5rem;"></i>
+                                            </div>
+                                            <h5 class="text-center">Local Expertise</h5>
+                                            <p>As a Florida-based company, we understand the local market, regulations, and weather considerations that impact sign durability and effectiveness in our unique climate.</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center mb-3">
+                                                <i class="bi bi-tools text-primary" style="font-size: 2.5rem;"></i>
+                                            </div>
+                                            <h5 class="text-center">Quality Craftsmanship</h5>
+                                            <p>Our team of skilled professionals uses only premium materials and cutting-edge technology to create signs that are not only visually striking but built to last.</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center mb-3">
+                                                <i class="bi bi-people-fill text-primary" style="font-size: 2.5rem;"></i>
+                                            </div>
+                                            <h5 class="text-center">Personalized Service</h5>
+                                            <p>We treat every client with individual attention, taking the time to understand your specific business needs and providing customized solutions to help you stand out.</p>
+                                        </div>
+                                        <div class="col-md-6 mt-4">
+                                            <div class="text-center mb-3">
+                                                <i class="bi bi-calendar-check-fill text-primary" style="font-size: 2.5rem;"></i>
+                                            </div>
+                                            <h5 class="text-center">Timely Delivery</h5>
+                                            <p>We understand that time is money for your business. That's why we pride ourselves on delivering projects on schedule and within budget, every time.</p>
+                                        </div>
+                                        <div class="col-md-6 mt-4">
+                                            <div class="text-center mb-3">
+                                                <i class="bi bi-stars text-primary" style="font-size: 2.5rem;"></i>
+                                            </div>
+                                            <h5 class="text-center">Full-Service Experience</h5>
+                                            <p>From initial design to installation and maintenance, we handle every aspect of your signage needs with a comprehensive approach that simplifies the process for you.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Contact Information</h5>
-                        <p>
-                            <strong><i class="bi bi-geo-alt-fill text-primary me-2"></i>Address:</strong><br>
-                            Miami, Florida
-                        </p>
-                        <p>
-                            <strong><i class="bi bi-telephone-fill text-primary me-2"></i>Phone:</strong><br>
-                            <a href="tel:+17863932372" class="text-decoration-none">(786) 393-2372</a>
-                        </p>
-                        <p>
-                            <strong><i class="bi bi-envelope-fill text-primary me-2"></i>Email:</strong><br>
-                            <a href="mailto:floridasignsolution@gmail.com" class="text-decoration-none">floridasignsolution@gmail.com</a>
-                        </p>
-                        <p>
-                            <strong><i class="bi bi-clock-fill text-primary me-2"></i>Business Hours:</strong><br>
-                            Monday - Friday: 8:00 AM - 6:00 PM<br>
-                            Saturday: Closed<br>
-                            Sunday: Closed
-                        </p>
                     </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="card-title text-center mb-4">Why Choose Florida Sign Solution?</h2>
-                        <div class="row g-4">
-                            <div class="col-md-4">
-                                <div class="text-center mb-3">
-                                    <i class="bi bi-trophy-fill text-primary" style="font-size: 2.5rem;"></i>
+    <!-- Sign Game Section moved to bottom of page -->
+    <section class="sign-game-section py-5 bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="section-title text-center mb-4">Try Our Interactive Sign Installation Game!</h2>
+                            <p class="text-center mb-4">Have some fun with our animated sign installation simulator. Drag the sign to the designated area on the storefront to see how satisfying a professional sign installation can be!</p>
+                            
+                            <div id="sign-game-container" class="sign-game-container">
+                                <div class="storefront-bg"></div>
+                                
+                                <!-- Street elements -->
+                                <div class="sidewalk">
+                                    <div class="person person-1"></div>
+                                    <div class="person person-2"></div>
                                 </div>
-                                <h5 class="text-center">Local Expertise</h5>
-                                <p>As a Florida-based company, we understand the local market, regulations, and weather considerations that impact sign durability and effectiveness in our unique climate.</p>
+                                <div class="grass-area">
+                                    <div class="tree tree-1"></div>
+                                    <div class="tree tree-2"></div>
+                                </div>
+                                <div class="street-lamp street-lamp-1"></div>
+                                <div class="street-lamp street-lamp-2"></div>
+                                
+                                <!-- Clouds -->
+                                <div class="cloud cloud-1"></div>
+                                <div class="cloud cloud-2"></div>
+                                <div class="cloud cloud-3"></div>
+                                
+                                <!-- Enhanced storefront elements -->
+                                <div class="storefront-facade">
+                                    <div class="storefront-base-trim"></div>
+                                </div>
+                                <div class="storefront-awning"></div>
+                                <div class="store-display"></div>
+                                <div class="store-name">FLORIDA SHOP</div>
+                                <div class="store-window store-window-left">
+                                    <div class="window-sign"></div>
+                                </div>
+                                <div class="store-window store-window-right"></div>
+                                <div class="flower-box flower-box-left"></div>
+                                <div class="flower-box flower-box-right"></div>
+                                
+                                <!-- Building elements for visual interest (these are behind the facade) -->
+                                <div class="building-window building-window-1"></div>
+                                <div class="building-window building-window-2"></div>
+                                <div class="building-window building-window-3"></div>
+                                <div class="building-window building-window-4"></div>
+                                
+                                <!-- Target area where sign should be placed -->
+                                <div id="sign-target-area" class="sign-target-area"></div>
+                                
+                                <!-- Draggable sign element -->
+                                <div id="draggable-sign" class="draggable-sign"></div>
+                                
+                                <!-- Game instructions -->
+                                <div class="game-instructions">
+                                    <p>Drag the sign to the dashed outline above the storefront</p>
+                                </div>
+                                
+                                <!-- Success message (hidden initially) -->
+                                <div id="game-success-message" class="game-success-message">
+                                    <h4>Perfect Installation!</h4>
+                                    <p>You've got what it takes to be a sign professional!</p>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="text-center mb-3">
-                                    <i class="bi bi-tools text-primary" style="font-size: 2.5rem;"></i>
-                                </div>
-                                <h5 class="text-center">Quality Craftsmanship</h5>
-                                <p>Our team of skilled professionals uses only premium materials and cutting-edge technology to create signs that are not only visually striking but built to last.</p>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="text-center mb-3">
-                                    <i class="bi bi-people-fill text-primary" style="font-size: 2.5rem;"></i>
-                                </div>
-                                <h5 class="text-center">Personalized Service</h5>
-                                <p>We treat every client with individual attention, taking the time to understand your specific business needs and providing customized solutions to help you stand out.</p>
-                            </div>
-                            <div class="col-md-6 mt-4">
-                                <div class="text-center mb-3">
-                                    <i class="bi bi-calendar-check-fill text-primary" style="font-size: 2.5rem;"></i>
-                                </div>
-                                <h5 class="text-center">Timely Delivery</h5>
-                                <p>We understand that time is money for your business. That's why we pride ourselves on delivering projects on schedule and within budget, every time.</p>
-                            </div>
-                            <div class="col-md-6 mt-4">
-                                <div class="text-center mb-3">
-                                    <i class="bi bi-stars text-primary" style="font-size: 2.5rem;"></i>
-                                </div>
-                                <h5 class="text-center">Full-Service Experience</h5>
-                                <p>From initial design to installation and maintenance, we handle every aspect of your signage needs with a comprehensive approach that simplifies the process for you.</p>
+                            
+                            <div class="text-center mt-4">
+                                <p class="mb-2">Ready for a real sign installation?</p>
+                                <a href="tel:+17863932372" class="btn btn-primary me-2">
+                                    <i class="bi bi-telephone-fill me-1"></i> Call Us Now
+                                </a>
+                                <a href="mailto:floridasignsolution@gmail.com" class="btn btn-outline-primary">
+                                    <i class="bi bi-envelope-fill me-1"></i> Email Us
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <footer class="bg-dark text-white pt-5 pb-4 mt-5">
+    <footer class="bg-dark text-white pt-5 pb-4 mt-0">
         <div class="container">
             <div class="row">
                 <!-- Company Info -->
@@ -543,5 +634,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/main.js"></script>
     <script src="js/animations.js"></script>
+    <script src="js/sign-game.js"></script>
 </body>
 </html> 
