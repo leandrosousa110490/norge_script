@@ -173,30 +173,8 @@
         .toast {
             min-width: 250px;
         }
-        #brand-logo {
-            font-weight: 700;
-            transition: font-size 0.3s ease;
-            color: #3498db;
-            line-height: 1.2;
-        }
         .font-control-buttons button {
             font-weight: bold;
-        }
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
-        }
-        .navbar-brand img {
-            margin-right: 12px;
-            height: 45px;
-            vertical-align: middle;
-        }
-        .navbar {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 1000;
         }
     </style>
     
@@ -210,7 +188,7 @@
     </script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light header">
         <div class="container">
             <!-- Brand with logo always visible -->
             <a class="navbar-brand fs-3" id="brand-logo" href="index.html">

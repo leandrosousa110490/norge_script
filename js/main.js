@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.querySelector('.stats-container')) {
         initCounterAnimation();
     }
+    setActiveNavLink();
 });
 
 /**
@@ -31,7 +32,12 @@ function initNavigation() {
     
     if (mobileToggle) {
         mobileToggle.addEventListener('click', function() {
-            navLinks.classList.toggle('show');
+            const target = document.getElementById('navbarNav');
+            if (target && bootstrap.Collapse.getInstance(target)) {
+                // Let Bootstrap handle it, or add custom logic if needed
+            } else if (navLinks) {
+                navLinks.classList.toggle('show');
+            }
             this.classList.toggle('active');
         });
     }
@@ -39,10 +45,12 @@ function initNavigation() {
     // Add scrolled class to header on scroll
     window.addEventListener('scroll', function() {
         const header = document.querySelector('.header');
-        if (window.scrollY > 100) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
+        if (header) {
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
         }
     });
 }
@@ -257,4 +265,19 @@ newsletterForms.forEach(function(form) {
         alert('Thank you for subscribing to our newsletter!');
         this.reset();
     });
-}); 
+});
+
+/**
+ * Sets the active class on the current navigation link.
+ */
+function setActiveNavLink() {
+    const currentPageUrl = window.location.pathname.split('/').pop() || 'index.html';
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+
+    navLinks.forEach(link => {
+        const linkUrl = link.getAttribute('href').split('/').pop();
+        if (linkUrl === currentPageUrl) {
+            link.classList.add('active');
+        }
+    });
+} 

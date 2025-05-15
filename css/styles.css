@@ -52,6 +52,8 @@
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --modern-shadow-navbar: 0 2px 12px rgba(0, 0, 0, 0.08); /* New shadow for navbar */
+    --modern-shadow-navbar-scrolled: 0 4px 15px rgba(0, 0, 0, 0.12); /* New shadow for scrolled navbar */
 }
 
 /* Reset and base elements */
@@ -215,24 +217,26 @@ section {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 1000;
-    background-color: var(--white);
-    box-shadow: var(--shadow-sm);
-    padding: var(--spacing-sm) 0;
-    transition: all var(--transition-fast);
+    z-index: 1030; /* Ensure it's above other content, Bootstrap's default z-index for fixed navbar is 1030 */
+    background-color: rgba(255, 255, 255, 0.85); /* Slightly transparent white for a modern feel */
+    backdrop-filter: blur(8px); /* Frosted glass effect */
+    -webkit-backdrop-filter: blur(8px); /* Safari support */
+    box-shadow: var(--modern-shadow-navbar);
+    padding: var(--spacing-sm) 0; /* e.g., 1rem 0 */
+    transition: background-color var(--transition-fast), box-shadow var(--transition-fast), padding var(--transition-fast);
 }
 
 /* Ensure consistent header styling across all pages */
+/* This might not be strictly necessary anymore if .header is always on the nav, but keeping for safety */
 body:not(.home) .header,
 body .header {
-    background-color: var(--white);
-    box-shadow: var(--shadow-sm);
+    /* Styles defined in .header above */
 }
 
 .header.scrolled {
-    padding: 0.5rem 0;
-    background-color: rgba(255, 255, 255, 0.95);
-    box-shadow: var(--shadow-md);
+    padding: 0.75rem 0; /* Slightly reduced padding */
+    background-color: rgba(255, 255, 255, 0.95); /* More opaque on scroll */
+    box-shadow: var(--modern-shadow-navbar-scrolled);
 }
 
 .header .container {
@@ -240,6 +244,132 @@ body .header {
     justify-content: space-between;
     align-items: center;
 }
+
+/* Styling for the Brand Logo text - was #brand-logo inline */
+#brand-logo {
+    font-weight: 700; /* From original inline style */
+    color: var(--primary-dark); /* Use a theme color */
+    line-height: 1.2; /* From original inline style */
+    transition: color var(--transition-fast), transform 0.2s ease-out;
+    font-size: 1.75rem; /* Adjusted for consistency, Bootstrap's fs-3 is 1.75rem */
+}
+
+#brand-logo:hover {
+    color: var(--secondary-color);
+    transform: scale(1.02);
+}
+
+/* Styling for the Brand Logo image - was .navbar-brand img inline */
+.navbar-brand img {
+    margin-right: 10px; /* Slightly adjusted */
+    height: 40px; /* Slightly adjusted */
+    vertical-align: middle; /* From original inline style */
+    transition: transform var(--transition-fast), filter var(--transition-fast);
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.1) rotate(-3deg); /* Playful hover effect */
+    filter: brightness(1.05);
+}
+
+/* Navbar links enhancements */
+.header .navbar-nav { /* Targeting .navbar-nav within .header */
+    /* display: flex; Align items if needed, Bootstrap usually handles this */
+    /* align-items: center; */
+}
+
+.header .navbar-nav .nav-link { /* Specific to Bootstrap nav links within our header */
+    color: var(--dark-gray);
+    font-weight: 500;
+    padding: 0.5rem 1rem; /* Standard Bootstrap padding, can be adjusted */
+    margin-left: 0.25rem; /* Reduced margin for slightly tighter links */
+    position: relative;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    border-radius: var(--radius-sm); /* Added for subtle background hover */
+}
+
+.header .navbar-nav .nav-link:hover,
+.header .navbar-nav .nav-link:focus {
+    color: var(--primary-color);
+    background-color: rgba(0, 86, 179, 0.05); /* Subtle background on hover/focus */
+}
+
+.header .navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px; /* Position the underline just below the text */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--secondary-color);
+    border-radius: 1px;
+    transition: width var(--transition-fast) ease-out;
+}
+
+.header .navbar-nav .nav-link:hover::after,
+.header .navbar-nav .nav-link:focus::after {
+    width: 60%; /* Underline width on hover/focus */
+}
+
+/* Active nav link style - applied by JS */
+.header .navbar-nav .nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600; /* Slightly bolder for active */
+    background-color: rgba(0, 86, 179, 0.1); /* Slightly more prominent background for active */
+}
+
+.header .navbar-nav .nav-link.active::after {
+    width: 80%; /* Fuller underline for active state */
+    background-color: var(--primary-color);
+}
+
+
+/* Mobile toggle adjustments if needed (Bootstrap's navbar-toggler) */
+.navbar-toggler {
+    border-color: rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s ease;
+}
+
+.navbar-toggler:hover {
+    box-shadow: 0 0 8px var(--primary-light);
+}
+
+.navbar-toggler-icon {
+    /* background-image can be customized for a more modern look if desired */
+    /* e.g., using a custom SVG or a different Bootstrap icon variant */
+}
+
+/* Adjustments for .nav-and-contact within the collapsible area */
+.nav-and-contact {
+    /* This class was in base.html, ensure it aligns items correctly if it contains both nav and contact */
+    /* For larger screens, it was ms-auto. For mobile, nav links are above contact info. */
+}
+
+.contact-info-row {
+    /* Styles for contact info in navbar */
+}
+
+.contact-link {
+    transition: color var(--transition-fast);
+}
+.contact-link:hover {
+    color: var(--primary-color);
+}
+
+
+/* Ensure the logo and text within navbar-brand are aligned */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    padding-top: 0.25rem; /* Retained from original inline */
+    padding-bottom: 0.25rem; /* Retained from original inline */
+}
+
+/* The existing .logo-container, .logo, .logo-text, .tagline might be from a different header structure. */
+/* I'm focusing on the Bootstrap .navbar structure from base.html. */
+/* If .logo, .logo-text are used within .navbar-brand, their styles might need review. */
 
 .logo-container {
     display: flex;
@@ -809,9 +939,10 @@ body .header {
 
 /* ===== FOOTER ===== */
 .footer {
-    background-color: var(--dark);
-    color: var(--white);
-    padding-top: var(--spacing-lg);
+    background-color: var(--dark-gray); /* Using a slightly lighter dark from variables */
+    color: var(--light-gray);
+    padding-top: var(--spacing-md); /* Consistent spacing */
+    padding-bottom: var(--spacing-sm);
 }
 
 .footer-content {
@@ -829,34 +960,47 @@ body .header {
 }
 
 .footer-logo img {
-    width: 80px;
+    max-height: 50px;
     margin-bottom: var(--spacing-sm);
 }
 
-.footer h3 {
+.footer h3, .footer h5 { /* Targeting h5 from base.html as well */
     color: var(--white);
+    font-family: var(--heading-font);
     margin-bottom: var(--spacing-sm);
-    font-size: 1.2rem;
+    text-transform: uppercase;
+    font-size: 1.1rem; /* Slightly adjusted size */
+    letter-spacing: 0.5px;
 }
 
 .footer-links ul,
-.footer-services ul {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.footer-contact ul {
+    list-style: none;
+    padding-left: 0;
 }
 
 .footer-links a,
-.footer-services a {
-    color: #aaa;
-    transition: color var(--transition-fast);
+.footer-contact a,
+.footer p a { /* General links in footer paragraphs */
+    color: var(--light-gray);
+    text-decoration: none;
+    transition: color var(--transition-fast), padding-left 0.2s ease-out;
 }
 
 .footer-links a:hover,
-.footer-services a:hover {
-    color: var(--white);
+.footer-contact a:hover,
+.footer p a:hover {
+    color: var(--secondary-light); /* Brighter hover color */
+    padding-left: 5px; /* Subtle indent on hover */
 }
 
+.footer-links i,
+.footer-contact i {
+    margin-right: 8px;
+    color: var(--primary-light);
+}
+
+/* Footer Newsletter Form (if applicable) - styles seem to exist already */
 .footer-newsletter p {
     color: #aaa;
     margin-bottom: var(--spacing-sm);
@@ -884,16 +1028,13 @@ body .header {
 }
 
 .newsletter-form button:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--secondary-dark);
 }
 
 .footer-bottom {
-    padding: var(--spacing-sm) 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
+    border-top: 1px solid var(--medium-gray); /* Slightly more visible separator */
+    padding-top: var(--spacing-sm);
+    margin-top: var(--spacing-md);
 }
 
 .footer-bottom p {
@@ -914,43 +1055,46 @@ body .header {
 
 .footer-bottom-links a:hover {
     color: var(--white);
+    text-decoration: underline;
 }
 
-/* Scroll to top button */
+/* ===== SCROLL TO TOP BUTTON ===== */
 #scrollToTop {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 25px;
+    right: 25px;
+    width: 50px;
+    height: 50px;
     background-color: var(--primary-color);
     color: var(--white);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    border: none;
+    border-radius: 50%; /* Circular button */
+    font-size: 1.5rem; /* Icon size */
+    text-align: center;
+    line-height: 50px; /* Vertically center icon */
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s;
-    border: none;
+    transform: translateY(20px) scale(0.9);
+    box-shadow: var(--shadow-md);
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
     z-index: 999;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 #scrollToTop i {
-    font-size: 1.25rem;
-    color: var(--white);
-    display: block;
+    /* No specific styles needed if line-height centers it */
 }
 
 #scrollToTop.visible {
     opacity: 1;
     visibility: visible;
+    transform: translateY(0) scale(1);
 }
 
 #scrollToTop:hover {
     background-color: var(--primary-dark);
+    transform: translateY(-3px) scale(1.05); /* Lift effect on hover */
+    box-shadow: var(--shadow-lg);
 }
 
 /* ===== RESPONSIVE STYLES ===== */
