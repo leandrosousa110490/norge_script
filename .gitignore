@@ -1,0 +1,16 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Local environment files
+.env
+
+# Firebase Admin credentials (server-only)
+server/firebase-admin-key.json
+
+# Do NOT commit client-side service account JSON
+js/firebase-config.json
+
+# OS
+.DS_Store
+Thumbs.db

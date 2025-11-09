@@ -56,6 +56,32 @@
     --modern-shadow-navbar-scrolled: 0 4px 15px rgba(0, 0, 0, 0.12); /* New shadow for scrolled navbar */
 }
 
+/* Slim site-wide quote banner under header */
+.quote-banner {
+    background: #f7fbff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 10px 0;
+    position: relative;
+    z-index: 900; /* slightly below header (which uses 1000) */
+}
+
+.quote-banner .get-quote-btn {
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: var(--radius-sm, 6px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 576px) {
+    .quote-banner {
+        padding: 12px 0;
+    }
+    .quote-banner .get-quote-btn {
+        width: 100%;
+        max-width: 320px;
+    }
+}
+
 /* Reset and base elements */
 * {
     margin: 0;
@@ -1607,4 +1633,4 @@ body .header {
         width: 100%;
         margin: 0 !important;
     }
-} 
+}

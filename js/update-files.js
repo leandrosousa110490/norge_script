@@ -19,8 +19,8 @@ filesToUpdate.forEach(file => {
             // Add animations.css reference if not exists
             if (!html.includes('animations.css')) {
                 html = html.replace(
-                    '<link rel="stylesheet" href="css/lightbox.css">',
-                    '<link rel="stylesheet" href="css/lightbox.css">\n    <link rel="stylesheet" href="css/animations.css">'
+                    '<link rel="stylesheet" href="css/styles.css">',
+                    '<link rel="stylesheet" href="css/styles.css">\n    <link rel="stylesheet" href="css/animations.css">'
                 );
             }
             
@@ -75,4 +75,4 @@ filesToUpdate.forEach(file => {
             console.log(html.substring(0, 500) + '...');
         })
         .catch(error => console.error(`Error processing ${file}:`, error));
-}); 
+});
