@@ -259,45 +259,22 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast(msg, 'error');
       }
     } else {
-      // Detect GitHub Pages and decide whether to use server fallback
-      const isGitHubPages = /github\.io$/.test(window.location.hostname);
-      const apiUrl = window.API_URL || 'http://localhost:3000/api/quote';
-      const canUseServer = !isGitHubPages && !!apiUrl;
-
-      if (canUseServer) {
-        try {
-          const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            showToast('Quote request sent via server. We will contact you soon!', 'success');
-            closeQuoteModal();
-            return;
-          } else {
-            const text = await res.text();
-            throw new Error('Server error ' + res.status + ' ' + text);
-          }
-        } catch (serverErr) {
-          console.warn('Server submission failed, falling back to local storage:', serverErr);
-        }
+      // Firebase-only on all mobile and external hosts
+      const isStaticHost = !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+      if (isStaticHost) {
+        showToast('Firebase not configured. Update js/firebase-config.js to enable sending.', 'error');
+        return;
       }
-
-      // Local fallback if server is disabled (GitHub Pages) or unreachable
+      // For local development, optionally log to localStorage to test UI
       try {
         const existing = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
         existing.push(payload);
         localStorage.setItem('quoteRequests', JSON.stringify(existing));
-        const hint = isGitHubPages
-          ? 'Saved locally. Configure Firebase Web SDK for GitHub Pages to enable sending.'
-          : 'Saved locally. Configure Firebase or start server to enable sending.';
-        showToast(hint, 'warning');
+        showToast('Saved locally (dev). Configure Firebase Web SDK to send.', 'warning');
         closeQuoteModal();
       } catch (e) {
         console.warn('Local storage logging failed:', e);
-        alert('Quote request recorded. Configure Firebase Web SDK or start server to enable sending.');
-        closeQuoteModal();
+        showToast('Cannot save locally. Configure Firebase Web SDK to send.', 'error');
       }
     }
   }

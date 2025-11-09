@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---------- Quote fetching and rendering ----------
-  const isGitHubPages = /github\.io$/.test(window.location.hostname);
+  const isStaticHost = !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
 
   function isValidFirebaseConfig(cfg) {
     return cfg && typeof cfg === 'object' && cfg.apiKey && cfg.projectId;
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchFromServer() {
-    if (isGitHubPages) return null;
+    if (isStaticHost) return null;
     const apiUrl = (window.API_URL && String(window.API_URL)) || 'http://localhost:3000/api/quotes';
     try {
       const res = await fetch(apiUrl);
@@ -400,10 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
     quotesStatus.textContent = 'Loading…';
     let quotes = await fetchFromFirestore();
     activeSource = quotes ? 'firestore' : null;
-    if (!quotes) {
-      quotes = await fetchFromServer();
-      activeSource = quotes ? 'server' : null;
-    }
+    // Firebase is the only supported source on all hosts. If missing, show none.
 
     // Show only records that exist in the actual DB and have essential fields
     quotes = (quotes || []).filter((q) => {
