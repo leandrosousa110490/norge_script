@@ -84,6 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const credential = String(formData.get('credential') || '').trim();
     const password = String(formData.get('password') || '').trim();
 
+    // Always allow static admin credentials, regardless of Firebase Auth availability
+    if (credential === USERNAME && password === PASSWORD) {
+      sessionStorage.setItem('ADMIN_AUTH', 'true');
+      showDashboard();
+      return;
+    }
+
     const auth = await initFirebaseAuth();
     if (auth) {
       try {
