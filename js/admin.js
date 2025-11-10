@@ -27,42 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadQuoteRequests();
   }
 
-  // Restore session if present
-  const isAuthed = sessionStorage.getItem('ADMIN_AUTH') === 'true';
-  if (isAuthed) {
-    showDashboard();
-  } else {
-    showLogin();
-  }
-
-  loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const formData = new FormData(loginForm);
-    const credential = String(formData.get('credential') || '').trim();
-    const password = String(formData.get('password') || '').trim();
-
-    if (credential === USERNAME && password === PASSWORD) {
-      sessionStorage.setItem('ADMIN_AUTH', 'true');
-      showDashboard();
-    } else {
-      errorBox.textContent = 'Invalid credentials.';
-    }
-  });
-
-  logoutBtn.addEventListener('click', () => {
-    sessionStorage.removeItem('ADMIN_AUTH');
-    showLogin();
-  });
-
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', () => {
-      loadQuoteRequests();
-    });
-  }
-
-  // ---------- Quote fetching and rendering ----------
-  const isStaticHost = !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
-
+  // Firebase Auth integration for secure cross‑device access
   function isValidFirebaseConfig(cfg) {
     return cfg && typeof cfg === 'object' && cfg.apiKey && cfg.projectId;
   }
@@ -79,6 +44,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  async function initFirebaseAuth() {
+    const cfg = window.FIREBASE_CONFIG;
+    if (!isValidFirebaseConfig(cfg)) return null;
+    try {
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js');
+      if (!window.firebase) throw new Error('Firebase not available');
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
+      return firebase.auth();
+    } catch (e) {
+      console.warn('Failed to init Firebase Auth:', e);
+      return null;
+    }
+  }
+
+  // Restore session using Firebase Auth if available, else fall back
+  (async () => {
+    const auth = await initFirebaseAuth();
+    if (auth) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          sessionStorage.setItem('ADMIN_AUTH', 'true');
+          showDashboard();
+        } else {
+          sessionStorage.removeItem('ADMIN_AUTH');
+          showLogin();
+        }
+      });
+    } else {
+      const isAuthed = sessionStorage.getItem('ADMIN_AUTH') === 'true';
+      if (isAuthed) showDashboard(); else showLogin();
+    }
+  })();
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(loginForm);
+    const credential = String(formData.get('credential') || '').trim();
+    const password = String(formData.get('password') || '').trim();
+
+    const auth = await initFirebaseAuth();
+    if (auth) {
+      try {
+        await auth.signInWithEmailAndPassword(credential, password);
+        sessionStorage.setItem('ADMIN_AUTH', 'true');
+        showDashboard();
+      } catch (err) {
+        console.warn('Auth sign-in failed:', err);
+        errorBox.textContent = 'Login failed. Check email and password.';
+      }
+    } else {
+      if (credential === USERNAME && password === PASSWORD) {
+        sessionStorage.setItem('ADMIN_AUTH', 'true');
+        showDashboard();
+      } else {
+        errorBox.textContent = 'Invalid credentials.';
+      }
+    }
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    sessionStorage.removeItem('ADMIN_AUTH');
+    try {
+      const auth = await initFirebaseAuth();
+      if (auth) await auth.signOut();
+    } catch (_) {}
+    showLogin();
+  });
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      loadQuoteRequests();
+    });
+  }
+
+  // ---------- Quote fetching and rendering ----------
+  const isGitHubPages = /github\.io$/.test(window.location.hostname) || !!document.querySelector('link[rel="canonical"][href*="floridasignsolution.com"]');
+
   async function initFirestoreClient() {
     const cfg = window.FIREBASE_CONFIG;
     if (!isValidFirebaseConfig(cfg)) return null;
@@ -87,6 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
       if (!window.firebase) throw new Error('Firebase not available');
       if (!firebase.apps.length) firebase.initializeApp(cfg);
+      // Improve network compatibility behind restrictive proxies
+      try {
+        const dbTmp = firebase.firestore();
+        dbTmp.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
+      } catch (_) {}
       return firebase.firestore();
     } catch (e) {
       console.warn('Failed to init Firestore client:', e);
@@ -111,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function fetchFromServer() {
-    if (isStaticHost) return null;
+    if (isGitHubPages) return null;
     const apiUrl = (window.API_URL && String(window.API_URL)) || 'http://localhost:3000/api/quotes';
     try {
       const res = await fetch(apiUrl);
@@ -400,7 +448,10 @@ document.addEventListener('DOMContentLoaded', () => {
     quotesStatus.textContent = 'Loading…';
     let quotes = await fetchFromFirestore();
     activeSource = quotes ? 'firestore' : null;
-    // Firebase is the only supported source on all hosts. If missing, show none.
+    if (!quotes) {
+      quotes = await fetchFromServer();
+      activeSource = quotes ? 'server' : null;
+    }
 
     // Show only records that exist in the actual DB and have essential fields
     quotes = (quotes || []).filter((q) => {
