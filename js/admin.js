@@ -135,8 +135,25 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
       await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
+      // Load App Check compat if site key provided to support enforced environments
+      const appCheckKey = String(window.FIREBASE_APPCHECK_SITE_KEY || '').trim();
+      if (appCheckKey) {
+        try {
+          await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js');
+        } catch (_) {}
+      }
       if (!window.firebase) throw new Error('Firebase not available');
       if (!firebase.apps.length) firebase.initializeApp(cfg);
+      // Activate App Check if configured
+      if (appCheckKey) {
+        try {
+          const appCheck = firebase.appCheck();
+          // enable auto refresh for tokens
+          appCheck.activate(appCheckKey, true);
+        } catch (e) {
+          console.warn('App Check activation failed:', e);
+        }
+      }
       // Improve network compatibility behind restrictive proxies
       try {
         const dbTmp = firebase.firestore();
