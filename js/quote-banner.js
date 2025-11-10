@@ -222,10 +222,20 @@ document.addEventListener('DOMContentLoaded', function () {
     let images = [];
     if (imageFiles.length) {
       try {
-        images = await prepareImages(imageFiles);
+        const uploaded = await uploadImagesToStorage(imageFiles);
+        if (uploaded && uploaded.length) {
+          images = uploaded;
+        } else {
+          images = await prepareImages(imageFiles);
+        }
       } catch (imgErr) {
-        console.warn('Image processing failed:', imgErr);
-        showToast('Could not process some images. Sending what we can.', 'warning');
+        console.warn('Image processing/upload failed:', imgErr);
+        try {
+          images = await prepareImages(imageFiles);
+        } catch (fallbackErr) {
+          console.warn('Fallback image compression failed:', fallbackErr);
+          showToast('Could not process images. Sending request without images.', 'warning');
+        }
       }
     }
 
@@ -480,6 +490,140 @@ document.addEventListener('DOMContentLoaded', function () {
       return window.firebase.firestore();
     } catch (err) {
       console.error('Failed to load Firebase libraries:', err);
+      return null;
+    }
+  }
+
+  function loadStorageLibs() {
+    return new Promise((resolve, reject) => {
+      const needStorage = !(window.firebase && window.firebase.storage);
+      const needAuth = !(window.firebase && window.firebase.auth);
+      if (!needStorage && !needAuth) { resolve(); return; }
+      const storageScript = document.createElement('script');
+      const authScript = document.createElement('script');
+      let pending = 0;
+      function done() { if (pending === 0) resolve(); }
+      function start() { pending++; }
+      function finish() { pending = Math.max(0, pending - 1); done(); }
+      if (needStorage) {
+        start();
+        storageScript.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js';
+        storageScript.onload = finish;
+        storageScript.onerror = finish;
+        document.head.appendChild(storageScript);
+      }
+      if (needAuth) {
+        start();
+        authScript.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js';
+        authScript.onload = finish;
+        authScript.onerror = finish;
+        document.head.appendChild(authScript);
+      }
+      done();
+    });
+  }
+
+  async function initFirebaseStorage() {
+    try {
+      await loadFirebaseLibs();
+      await loadStorageLibs();
+      if (!hasValidFirebaseConfig()) {
+        console.warn('Firebase config is missing or has placeholders. Storage disabled.');
+        return null;
+      }
+      if (!window.firebase.apps.length) {
+        window.firebase.initializeApp(window.FIREBASE_CONFIG);
+      }
+      if (hasValidAppCheckKey() && window.firebase.appCheck) {
+        try { window.firebase.appCheck().activate(window.FIREBASE_APPCHECK_SITE_KEY); } catch (_) {}
+      }
+      if (window.firebase && window.firebase.storage) {
+        return window.firebase.storage();
+      }
+      return null;
+    } catch (err) {
+      console.warn('Init Firebase Storage failed:', err);
+      return null;
+    }
+  }
+
+  async function ensureAnonymousAuthIfAvailable() {
+    try {
+      await loadStorageLibs();
+      if (!window.firebase || !window.firebase.auth) return false;
+      let ok = false;
+      try {
+        const auth = window.firebase.auth();
+        if (!auth.currentUser) await auth.signInAnonymously();
+        ok = !!auth.currentUser;
+      } catch (_) {}
+      return ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function dataUrlToBlob(dataUrl) {
+    const resp = await fetch(dataUrl);
+    return resp.blob();
+  }
+
+  function pickExtFromType(type, fallback) {
+    try {
+      const t = String(type || '').toLowerCase();
+      if (t.includes('jpeg')) return 'jpg';
+      if (t.includes('jpg')) return 'jpg';
+      if (t.includes('png')) return 'png';
+      if (t.includes('gif')) return 'gif';
+      if (t.includes('webp')) return 'webp';
+      if (t.includes('heic')) return 'heic';
+      return fallback || 'jpg';
+    } catch (_) {
+      return fallback || 'jpg';
+    }
+  }
+
+  async function uploadImagesToStorage(files) {
+    try {
+      const storage = await initFirebaseStorage();
+      if (!storage) return null;
+      await ensureAnonymousAuthIfAvailable();
+      const picked = files.slice(0, 3);
+      const count = picked.length;
+      const cfgByCount = (
+        count === 1 ? { maxW: 1600, maxH: 1600, initialQuality: 0.88, minQuality: 0.72, perImageLimit: 900 * 1024 } :
+        count === 2 ? { maxW: 1200, maxH: 1200, initialQuality: 0.82, minQuality: 0.68, perImageLimit: 450 * 1024 } :
+                      { maxW: 900,  maxH: 900,  initialQuality: 0.75, minQuality: 0.60, perImageLimit: 300 * 1024 }
+      );
+      const folder = `quoteUploads/${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const out = [];
+      for (let i = 0; i < picked.length; i++) {
+        const f = picked[i];
+        let blob = null;
+        let contentType = 'image/jpeg';
+        let ext = 'jpg';
+        try {
+          const data = await prepareImageData(f, cfgByCount);
+          blob = await dataUrlToBlob(data);
+          contentType = (data.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg';
+          ext = pickExtFromType(contentType, 'jpg');
+        } catch (_) {
+          blob = f;
+          contentType = f.type || 'application/octet-stream';
+          ext = pickExtFromType(contentType, 'jpg');
+        }
+        const ref = storage.ref(`${folder}/img-${i + 1}.${ext}`);
+        try {
+          const snap = await ref.put(blob, { contentType });
+          const url = await snap.ref.getDownloadURL();
+          out.push(url);
+        } catch (upErr) {
+          console.warn('Image upload failed for index', i, upErr);
+        }
+      }
+      return out;
+    } catch (err) {
+      console.warn('UploadImagesToStorage error:', err);
       return null;
     }
   }

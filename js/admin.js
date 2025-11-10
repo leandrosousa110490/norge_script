@@ -135,6 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------- Quote fetching and rendering ----------
   const isGitHubPages = /github\.io$/.test(window.location.hostname) || !!document.querySelector('link[rel="canonical"][href*="floridasignsolution.com"]');
 
+  function isImageSrc(s) {
+    return typeof s === 'string' && (s.startsWith('data:image') || /^https?:\/\//i.test(s));
+  }
+
   async function initFirestoreClient() {
     const cfg = window.FIREBASE_CONFIG;
     if (!isValidFirebaseConfig(cfg)) return null;
@@ -247,8 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Image thumbnails (if present, up to 3)
       const imgCell = document.createElement('td');
       imgCell.className = 'cell-images';
-      const imgs = Array.isArray(q.images) ? q.images : (q.imageData ? [q.imageData] : []);
-      const first = (imgs || []).find((src) => typeof src === 'string' && src.startsWith('data:image'));
+      const imgs = Array.isArray(q.images) ? q.images.filter(isImageSrc) : (q.imageData ? [q.imageData] : []);
+      const first = (imgs || [])[0];
       if (first) {
         const img = document.createElement('img');
         img.src = first;
@@ -371,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fullscreen image viewer (lightbox) for admin
   function openImageViewer(images, startIndex) {
-    const imgs = Array.isArray(images) ? images.filter((s) => typeof s === 'string' && s.startsWith('data:image')) : [];
+    const imgs = Array.isArray(images) ? images.filter(isImageSrc) : [];
     if (!imgs.length) return;
     let index = Math.max(0, Math.min(startIndex || 0, imgs.length - 1));
 
@@ -435,12 +439,22 @@ document.addEventListener('DOMContentLoaded', () => {
     update();
     // Bind download to current image
     downloadBtn.onclick = async () => {
-      const dataUrl = imgs[index];
-      const mime = (dataUrl.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg';
-      const ext = (mime.split('/')[1] || 'jpeg').replace('jpeg','jpg');
-      const filename = `attachment-${index + 1}.${ext}`;
+      const src = imgs[index];
+      let filename = `attachment-${index + 1}.jpg`;
       try {
-        const resp = await fetch(dataUrl);
+        if (typeof src === 'string' && src.startsWith('data:')) {
+          const mime = (src.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg';
+          const ext = (mime.split('/')[1] || 'jpeg').replace('jpeg','jpg');
+          filename = `attachment-${index + 1}.${ext}`;
+        } else if (typeof src === 'string' && /^https?:\/\//i.test(src)) {
+          try {
+            const u = new URL(src);
+            const path = u.pathname || '';
+            const m = path.match(/\.([a-zA-Z0-9]+)$/);
+            if (m && m[1]) filename = `attachment-${index + 1}.${m[1]}`;
+          } catch (_) {}
+        }
+        const resp = await fetch(src);
         const blob = await resp.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -452,8 +466,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => URL.revokeObjectURL(url), 2000);
       } catch (err) {
         const a = document.createElement('a');
-        a.href = dataUrl;
+        a.href = src;
         a.download = filename;
+        a.target = '_blank';
+        a.rel = 'noopener';
         document.body.appendChild(a);
         a.click();
         a.remove();
