@@ -248,57 +248,96 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (db) {
       try {
+        // Ensure an Auth session exists for rules that require request.auth
+        await ensureAnonymousAuthIfNeeded();
         await db.collection('quoteRequests').add(payload);
         showToast('Quote request sent. We will contact you soon!', 'success');
         closeQuoteModal();
       } catch (e) {
         console.error('Firestore write error:', e);
-        const msg = (e && e.code === 'permission-denied')
-          ? 'Permission denied. Update Firestore rules or enable App Check.'
-          : 'Unable to send now. Please try again later.';
-        showToast(msg, 'error');
+        // Retry once after attempting anonymous auth (covers unauthenticated/permission-denied cases)
+        try {
+          await ensureAnonymousAuthIfNeeded(true);
+          await db.collection('quoteRequests').add(payload);
+          showToast('Quote request sent. We will contact you soon!', 'success');
+          closeQuoteModal();
+          return;
+        } catch (retryErr) {
+          console.warn('Retry after auth failed:', retryErr);
+        }
+        // Fall back to server/local to avoid losing the submission
+        await submitViaFallback(payload);
       }
     } else {
-      // Detect GitHub Pages and decide whether to use server fallback
-      const isGitHubPages = /github\.io$/.test(window.location.hostname);
-      const apiUrl = window.API_URL || 'http://localhost:3000/api/quote';
-      const canUseServer = !isGitHubPages && !!apiUrl;
+      await submitViaFallback(payload);
+    }
+  }
 
-      if (canUseServer) {
-        try {
-          const res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          if (res.ok) {
-            showToast('Quote request sent via server. We will contact you soon!', 'success');
-            closeQuoteModal();
-            return;
-          } else {
-            const text = await res.text();
-            throw new Error('Server error ' + res.status + ' ' + text);
-          }
-        } catch (serverErr) {
-          console.warn('Server submission failed, falling back to local storage:', serverErr);
-        }
+  // Load Firebase Auth (compat) and sign in anonymously if needed
+  async function loadFirebaseAuth() {
+    return new Promise((resolve, reject) => {
+      if (window.firebase && window.firebase.auth) { resolve(); return; }
+      const authScript = document.createElement('script');
+      authScript.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js';
+      authScript.onload = () => resolve();
+      authScript.onerror = reject;
+      document.head.appendChild(authScript);
+    });
+  }
+
+  async function ensureAnonymousAuthIfNeeded(force) {
+    try {
+      await loadFirebaseAuth();
+      const auth = window.firebase.auth();
+      const user = auth.currentUser;
+      if (!user || force) {
+        await auth.signInAnonymously();
       }
+    } catch (e) {
+      console.warn('Anonymous auth failed or unavailable:', e);
+    }
+  }
 
-      // Local fallback if server is disabled (GitHub Pages) or unreachable
+  async function submitViaFallback(payload) {
+    // Detect GitHub Pages and decide whether to use server fallback
+    const isGitHubPages = /github\.io$/.test(window.location.hostname);
+    const apiUrl = window.API_URL || 'http://localhost:3000/api/quote';
+    const canUseServer = !isGitHubPages && !!apiUrl;
+
+    if (canUseServer) {
       try {
-        const existing = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
-        existing.push(payload);
-        localStorage.setItem('quoteRequests', JSON.stringify(existing));
-        const hint = isGitHubPages
-          ? 'Saved locally. Configure Firebase Web SDK for GitHub Pages to enable sending.'
-          : 'Saved locally. Configure Firebase or start server to enable sending.';
-        showToast(hint, 'warning');
-        closeQuoteModal();
-      } catch (e) {
-        console.warn('Local storage logging failed:', e);
-        alert('Quote request recorded. Configure Firebase Web SDK or start server to enable sending.');
-        closeQuoteModal();
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showToast('Quote request sent via server. We will contact you soon!', 'success');
+          closeQuoteModal();
+          return;
+        } else {
+          const text = await res.text();
+          throw new Error('Server error ' + res.status + ' ' + text);
+        }
+      } catch (serverErr) {
+        console.warn('Server submission failed, falling back to local storage:', serverErr);
       }
+    }
+
+    // Local fallback if server is disabled (GitHub Pages) or unreachable
+    try {
+      const existing = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
+      existing.push(payload);
+      localStorage.setItem('quoteRequests', JSON.stringify(existing));
+      const hint = isGitHubPages
+        ? 'Saved locally. Configure Firebase Web SDK for GitHub Pages to enable sending.'
+        : 'Saved locally. Configure Firebase or start server to enable sending.';
+      showToast(hint, 'warning');
+      closeQuoteModal();
+    } catch (e) {
+      console.warn('Local storage logging failed:', e);
+      alert('Quote request recorded. Configure Firebase Web SDK or start server to enable sending.');
+      closeQuoteModal();
     }
   }
 
