@@ -222,20 +222,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let images = [];
     if (imageFiles.length) {
       try {
-        const uploaded = await uploadImagesToStorage(imageFiles);
-        if (uploaded && uploaded.length) {
-          images = uploaded;
-        } else {
-          images = await prepareImages(imageFiles);
-        }
+        images = await prepareImages(imageFiles);
       } catch (imgErr) {
-        console.warn('Image processing/upload failed:', imgErr);
-        try {
-          images = await prepareImages(imageFiles);
-        } catch (fallbackErr) {
-          console.warn('Fallback image compression failed:', fallbackErr);
-          showToast('Could not process images. Sending request without images.', 'warning');
-        }
+        console.warn('Image processing failed:', imgErr);
+        showToast('Could not process some images. Sending what we can.', 'warning');
       }
     }
 
@@ -322,9 +312,38 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // Try decoding images using createImageBitmap first (better support, fixes EXIF orientation),
+  // and fall back to <img src="data:"> when unavailable.
+  async function fileToCanvas(file, maxW = 800, maxH = 800) {
+    // Preferred path: createImageBitmap (handles more formats on mobile like HEIC/HEIF)
+    if (typeof createImageBitmap === 'function') {
+      try {
+        // imageOrientation honors EXIF rotation automatically where supported
+        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const ratio = Math.min(maxW / bitmap.width, maxH / bitmap.height, 1);
+        const width = Math.floor(bitmap.width * ratio);
+        const height = Math.floor(bitmap.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        try { bitmap.close && bitmap.close(); } catch (_) {}
+        return canvas;
+      } catch (_) {
+        // Fall through to data URL decode
+      }
+    }
+    // Fallback: decode via <img src="data:"> using FileReader
+    const dataUrl = await readFileAsDataURL(file);
+    return dataUrlToCanvas(dataUrl, maxW, maxH);
+  }
+
   async function dataUrlToCanvas(dataUrl, maxW = 800, maxH = 800) {
     return new Promise((resolve, reject) => {
       const img = new Image();
+      // Not strictly necessary for data URLs, but harmless
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
         let { width, height } = img;
         const ratio = Math.min(maxW / width, maxH / height, 1);
@@ -342,12 +361,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  async function compressCanvasToDataUrl(canvas, quality) {
+  function pickTargetMime(fileType) {
+    const t = String(fileType || '').toLowerCase();
+    // Prefer PNG for formats that benefit from lossless or may have transparency
+    if (/(png|gif|bmp|tiff|webp)/.test(t)) return 'image/png';
+    // Default to JPEG for camera photos (jpeg/heic/heif)
+    return 'image/jpeg';
+  }
+
+  async function compressCanvasToDataUrl(canvas, quality, targetMime) {
     try {
+      if (targetMime === 'image/png') {
+        return canvas.toDataURL('image/png');
+      }
       return canvas.toDataURL('image/jpeg', quality);
-    } catch (e) {
-      // Fallback to PNG if JPEG fails
-      return canvas.toDataURL('image/png');
+    } catch (_) {
+      try {
+        return canvas.toDataURL('image/png');
+      } catch (e2) {
+        // Final fallback to a slightly lower JPEG quality
+        return canvas.toDataURL('image/jpeg', Math.max(0.6, (quality || 0.75) - 0.2));
+      }
     }
   }
 
@@ -360,16 +394,27 @@ document.addEventListener('DOMContentLoaded', function () {
       minQuality: 0.6,
       perImageLimit: 300 * 1024 // characters (base64 length)
     }, cfg || {});
-
-    const initial = await readFileAsDataURL(file);
+    const targetMime = pickTargetMime(file && file.type);
     let quality = config.initialQuality;
     let maxW = config.maxW;
     let maxH = config.maxH;
     let attempts = 0;
     let out = '';
     while (attempts < 6) {
-      const canvas = await dataUrlToCanvas(initial, maxW, maxH);
-      out = await compressCanvasToDataUrl(canvas, quality);
+      let canvas;
+      try {
+        canvas = await fileToCanvas(file, maxW, maxH);
+      } catch (decodeErr) {
+        // If the browser cannot decode this format to canvas, try storing the original data URL
+        try {
+          const initial = await readFileAsDataURL(file);
+          if (typeof initial === 'string' && initial.length <= config.perImageLimit) {
+            return initial; // Store as-is (e.g., HEIC on Safari)
+          }
+        } catch (_) {}
+        throw decodeErr;
+      }
+      out = await compressCanvasToDataUrl(canvas, quality, targetMime);
       if (out.length <= config.perImageLimit) break;
       // Reduce quality first, then dimensions if needed
       if (quality > config.minQuality) {
@@ -401,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const data = await prepareImageData(f, cfgByCount);
         results.push(data);
       } catch (e) {
-        console.warn('Skipping too-large image:', e);
+        console.warn('Skipping unsupported/too-large image:', e);
       }
     }
     return results;
@@ -490,183 +535,6 @@ document.addEventListener('DOMContentLoaded', function () {
       return window.firebase.firestore();
     } catch (err) {
       console.error('Failed to load Firebase libraries:', err);
-      return null;
-    }
-  }
-
-  function loadStorageLibs() {
-    return new Promise((resolve, reject) => {
-      const needStorage = !(window.firebase && window.firebase.storage);
-      const needAuth = !(window.firebase && window.firebase.auth);
-      if (!needStorage && !needAuth) { resolve(); return; }
-      const storageScript = document.createElement('script');
-      const authScript = document.createElement('script');
-      let pending = 0;
-      function done() { if (pending === 0) resolve(); }
-      function start() { pending++; }
-      function finish() { pending = Math.max(0, pending - 1); done(); }
-      if (needStorage) {
-        start();
-        storageScript.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js';
-        storageScript.onload = finish;
-        storageScript.onerror = finish;
-        document.head.appendChild(storageScript);
-      }
-      if (needAuth) {
-        start();
-        authScript.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js';
-        authScript.onload = finish;
-        authScript.onerror = finish;
-        document.head.appendChild(authScript);
-      }
-      done();
-    });
-  }
-
-  async function initFirebaseStorage() {
-    try {
-      await loadFirebaseLibs();
-      await loadStorageLibs();
-      if (!hasValidFirebaseConfig()) {
-        console.warn('Firebase config is missing or has placeholders. Storage disabled.');
-        return null;
-      }
-      if (!window.firebase.apps.length) {
-        window.firebase.initializeApp(window.FIREBASE_CONFIG);
-      }
-      if (hasValidAppCheckKey() && window.firebase.appCheck) {
-        try { window.firebase.appCheck().activate(window.FIREBASE_APPCHECK_SITE_KEY); } catch (_) {}
-      }
-      if (window.firebase && window.firebase.storage) {
-        return window.firebase.storage();
-      }
-      return null;
-    } catch (err) {
-      console.warn('Init Firebase Storage failed:', err);
-      return null;
-    }
-  }
-
-  function loadHeicLib() {
-    return new Promise((resolve) => {
-      if (window.heic2any) { resolve(true); return; }
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/heic2any@latest/dist/heic2any.min.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    });
-  }
-
-  function isHeicFile(file) {
-    try {
-      const type = String(file?.type || '').toLowerCase();
-      const name = String(file?.name || '').toLowerCase();
-      return type.includes('heic') || name.endsWith('.heic');
-    } catch (_) { return false; }
-  }
-
-  async function convertHeicToJpegBlob(file) {
-    try {
-      const ok = await loadHeicLib();
-      if (!ok || !window.heic2any) return null;
-      const blob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.82 });
-      return blob;
-    } catch (err) {
-      console.warn('HEIC conversion failed:', err);
-      return null;
-    }
-  }
-
-  async function ensureAnonymousAuthIfAvailable() {
-    try {
-      await loadStorageLibs();
-      if (!window.firebase || !window.firebase.auth) return false;
-      let ok = false;
-      try {
-        const auth = window.firebase.auth();
-        if (!auth.currentUser) await auth.signInAnonymously();
-        ok = !!auth.currentUser;
-      } catch (_) {}
-      return ok;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  async function dataUrlToBlob(dataUrl) {
-    const resp = await fetch(dataUrl);
-    return resp.blob();
-  }
-
-  function pickExtFromType(type, fallback) {
-    try {
-      const t = String(type || '').toLowerCase();
-      if (t.includes('jpeg')) return 'jpg';
-      if (t.includes('jpg')) return 'jpg';
-      if (t.includes('png')) return 'png';
-      if (t.includes('gif')) return 'gif';
-      if (t.includes('webp')) return 'webp';
-      if (t.includes('heic')) return 'heic';
-      return fallback || 'jpg';
-    } catch (_) {
-      return fallback || 'jpg';
-    }
-  }
-
-  async function uploadImagesToStorage(files) {
-    try {
-      const storage = await initFirebaseStorage();
-      if (!storage) return null;
-      await ensureAnonymousAuthIfAvailable();
-      const picked = files.slice(0, 3);
-      const count = picked.length;
-      const cfgByCount = (
-        count === 1 ? { maxW: 1600, maxH: 1600, initialQuality: 0.88, minQuality: 0.72, perImageLimit: 900 * 1024 } :
-        count === 2 ? { maxW: 1200, maxH: 1200, initialQuality: 0.82, minQuality: 0.68, perImageLimit: 450 * 1024 } :
-                      { maxW: 900,  maxH: 900,  initialQuality: 0.75, minQuality: 0.60, perImageLimit: 300 * 1024 }
-      );
-      const folder = `quoteUploads/${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      const out = [];
-      for (let i = 0; i < picked.length; i++) {
-        const f = picked[i];
-        let blob = null;
-        let contentType = 'image/jpeg';
-        let ext = 'jpg';
-        try {
-          // Prefer browser-side compression to keep sizes reasonable
-          const data = await prepareImageData(f, cfgByCount);
-          blob = await dataUrlToBlob(data);
-          contentType = (data.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg';
-          ext = pickExtFromType(contentType, 'jpg');
-        } catch (_) {
-          // If compression failed, try HEIC -> JPEG conversion, else upload raw
-          if (isHeicFile(f)) {
-            const heic = await convertHeicToJpegBlob(f);
-            if (heic) {
-              blob = heic;
-              contentType = 'image/jpeg';
-              ext = 'jpg';
-            }
-          }
-          if (!blob) {
-            blob = f;
-            contentType = f.type || 'application/octet-stream';
-            ext = pickExtFromType(contentType, 'jpg');
-          }
-        }
-        const ref = storage.ref(`${folder}/img-${i + 1}.${ext}`);
-        try {
-          const snap = await ref.put(blob, { contentType });
-          const url = await snap.ref.getDownloadURL();
-          out.push(url);
-        } catch (upErr) {
-          console.warn('Image upload failed for index', i, upErr);
-        }
-      }
-      return out;
-    } catch (err) {
-      console.warn('UploadImagesToStorage error:', err);
       return null;
     }
   }
