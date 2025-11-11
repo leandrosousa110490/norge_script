@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="mb-3">
               <label for="quoteImages" class="form-label">Attach pictures (optional, up to 3)</label>
-              <input type="file" id="quoteImages" class="form-control" accept="image/*" multiple />
+              <input type="file" id="quoteImages" class="form-control" accept="image/*,image/heic,image/heif,.heic,.heif" multiple />
               <small class="form-text text-muted">We store compressed images directly in the database, not Storage.</small>
               <div id="quoteImagesError" class="form-text" style="color:#dc2626; display:none;">Please select up to 3 images.</div>
             </div>
