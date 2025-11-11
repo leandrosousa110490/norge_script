@@ -547,6 +547,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function loadHeicLib() {
+    return new Promise((resolve) => {
+      if (window.heic2any) { resolve(true); return; }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/heic2any@latest/dist/heic2any.min.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
+  }
+
+  function isHeicFile(file) {
+    try {
+      const type = String(file?.type || '').toLowerCase();
+      const name = String(file?.name || '').toLowerCase();
+      return type.includes('heic') || name.endsWith('.heic');
+    } catch (_) { return false; }
+  }
+
+  async function convertHeicToJpegBlob(file) {
+    try {
+      const ok = await loadHeicLib();
+      if (!ok || !window.heic2any) return null;
+      const blob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.82 });
+      return blob;
+    } catch (err) {
+      console.warn('HEIC conversion failed:', err);
+      return null;
+    }
+  }
+
   async function ensureAnonymousAuthIfAvailable() {
     try {
       await loadStorageLibs();
@@ -603,14 +634,26 @@ document.addEventListener('DOMContentLoaded', function () {
         let contentType = 'image/jpeg';
         let ext = 'jpg';
         try {
+          // Prefer browser-side compression to keep sizes reasonable
           const data = await prepareImageData(f, cfgByCount);
           blob = await dataUrlToBlob(data);
           contentType = (data.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg';
           ext = pickExtFromType(contentType, 'jpg');
         } catch (_) {
-          blob = f;
-          contentType = f.type || 'application/octet-stream';
-          ext = pickExtFromType(contentType, 'jpg');
+          // If compression failed, try HEIC -> JPEG conversion, else upload raw
+          if (isHeicFile(f)) {
+            const heic = await convertHeicToJpegBlob(f);
+            if (heic) {
+              blob = heic;
+              contentType = 'image/jpeg';
+              ext = 'jpg';
+            }
+          }
+          if (!blob) {
+            blob = f;
+            contentType = f.type || 'application/octet-stream';
+            ext = pickExtFromType(contentType, 'jpg');
+          }
         }
         const ref = storage.ref(`${folder}/img-${i + 1}.${ext}`);
         try {
