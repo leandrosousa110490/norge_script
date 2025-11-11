@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="mb-3">
               <label for="quoteImages" class="form-label">Attach pictures (optional, up to 3)</label>
-              <input type="file" id="quoteImages" class="form-control" accept="image/*,image/heic,image/heif,.heic,.heif" multiple />
+              <input type="file" id="quoteImages" class="form-control" accept="image/*" multiple />
               <small class="form-text text-muted">We store compressed images directly in the database, not Storage.</small>
               <div id="quoteImagesError" class="form-text" style="color:#dc2626; display:none;">Please select up to 3 images.</div>
             </div>
@@ -248,96 +248,57 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (db) {
       try {
-        // Ensure an Auth session exists for rules that require request.auth
-        await ensureAnonymousAuthIfNeeded();
         await db.collection('quoteRequests').add(payload);
         showToast('Quote request sent. We will contact you soon!', 'success');
         closeQuoteModal();
       } catch (e) {
         console.error('Firestore write error:', e);
-        // Retry once after attempting anonymous auth (covers unauthenticated/permission-denied cases)
-        try {
-          await ensureAnonymousAuthIfNeeded(true);
-          await db.collection('quoteRequests').add(payload);
-          showToast('Quote request sent. We will contact you soon!', 'success');
-          closeQuoteModal();
-          return;
-        } catch (retryErr) {
-          console.warn('Retry after auth failed:', retryErr);
-        }
-        // Fall back to server/local to avoid losing the submission
-        await submitViaFallback(payload);
+        const msg = (e && e.code === 'permission-denied')
+          ? 'Permission denied. Update Firestore rules or enable App Check.'
+          : 'Unable to send now. Please try again later.';
+        showToast(msg, 'error');
       }
     } else {
-      await submitViaFallback(payload);
-    }
-  }
+      // Detect GitHub Pages and decide whether to use server fallback
+      const isGitHubPages = /github\.io$/.test(window.location.hostname);
+      const apiUrl = window.API_URL || 'http://localhost:3000/api/quote';
+      const canUseServer = !isGitHubPages && !!apiUrl;
 
-  // Load Firebase Auth (compat) and sign in anonymously if needed
-  async function loadFirebaseAuth() {
-    return new Promise((resolve, reject) => {
-      if (window.firebase && window.firebase.auth) { resolve(); return; }
-      const authScript = document.createElement('script');
-      authScript.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js';
-      authScript.onload = () => resolve();
-      authScript.onerror = reject;
-      document.head.appendChild(authScript);
-    });
-  }
-
-  async function ensureAnonymousAuthIfNeeded(force) {
-    try {
-      await loadFirebaseAuth();
-      const auth = window.firebase.auth();
-      const user = auth.currentUser;
-      if (!user || force) {
-        await auth.signInAnonymously();
-      }
-    } catch (e) {
-      console.warn('Anonymous auth failed or unavailable:', e);
-    }
-  }
-
-  async function submitViaFallback(payload) {
-    // Detect GitHub Pages and decide whether to use server fallback
-    const isGitHubPages = /github\.io$/.test(window.location.hostname);
-    const apiUrl = window.API_URL || 'http://localhost:3000/api/quote';
-    const canUseServer = !isGitHubPages && !!apiUrl;
-
-    if (canUseServer) {
-      try {
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          showToast('Quote request sent via server. We will contact you soon!', 'success');
-          closeQuoteModal();
-          return;
-        } else {
-          const text = await res.text();
-          throw new Error('Server error ' + res.status + ' ' + text);
+      if (canUseServer) {
+        try {
+          const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            showToast('Quote request sent via server. We will contact you soon!', 'success');
+            closeQuoteModal();
+            return;
+          } else {
+            const text = await res.text();
+            throw new Error('Server error ' + res.status + ' ' + text);
+          }
+        } catch (serverErr) {
+          console.warn('Server submission failed, falling back to local storage:', serverErr);
         }
-      } catch (serverErr) {
-        console.warn('Server submission failed, falling back to local storage:', serverErr);
       }
-    }
 
-    // Local fallback if server is disabled (GitHub Pages) or unreachable
-    try {
-      const existing = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
-      existing.push(payload);
-      localStorage.setItem('quoteRequests', JSON.stringify(existing));
-      const hint = isGitHubPages
-        ? 'Saved locally. Configure Firebase Web SDK for GitHub Pages to enable sending.'
-        : 'Saved locally. Configure Firebase or start server to enable sending.';
-      showToast(hint, 'warning');
-      closeQuoteModal();
-    } catch (e) {
-      console.warn('Local storage logging failed:', e);
-      alert('Quote request recorded. Configure Firebase Web SDK or start server to enable sending.');
-      closeQuoteModal();
+      // Local fallback if server is disabled (GitHub Pages) or unreachable
+      try {
+        const existing = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
+        existing.push(payload);
+        localStorage.setItem('quoteRequests', JSON.stringify(existing));
+        const hint = isGitHubPages
+          ? 'Saved locally. Configure Firebase Web SDK for GitHub Pages to enable sending.'
+          : 'Saved locally. Configure Firebase or start server to enable sending.';
+        showToast(hint, 'warning');
+        closeQuoteModal();
+      } catch (e) {
+        console.warn('Local storage logging failed:', e);
+        alert('Quote request recorded. Configure Firebase Web SDK or start server to enable sending.');
+        closeQuoteModal();
+      }
     }
   }
 
@@ -351,38 +312,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Try decoding images using createImageBitmap first (better support, fixes EXIF orientation),
-  // and fall back to <img src="data:"> when unavailable.
-  async function fileToCanvas(file, maxW = 800, maxH = 800) {
-    // Preferred path: createImageBitmap (handles more formats on mobile like HEIC/HEIF)
-    if (typeof createImageBitmap === 'function') {
-      try {
-        // imageOrientation honors EXIF rotation automatically where supported
-        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-        const ratio = Math.min(maxW / bitmap.width, maxH / bitmap.height, 1);
-        const width = Math.floor(bitmap.width * ratio);
-        const height = Math.floor(bitmap.height * ratio);
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(bitmap, 0, 0, width, height);
-        try { bitmap.close && bitmap.close(); } catch (_) {}
-        return canvas;
-      } catch (_) {
-        // Fall through to data URL decode
-      }
-    }
-    // Fallback: decode via <img src="data:"> using FileReader
-    const dataUrl = await readFileAsDataURL(file);
-    return dataUrlToCanvas(dataUrl, maxW, maxH);
-  }
-
   async function dataUrlToCanvas(dataUrl, maxW = 800, maxH = 800) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      // Not strictly necessary for data URLs, but harmless
-      img.crossOrigin = 'anonymous';
       img.onload = () => {
         let { width, height } = img;
         const ratio = Math.min(maxW / width, maxH / height, 1);
@@ -400,27 +332,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function pickTargetMime(fileType) {
-    const t = String(fileType || '').toLowerCase();
-    // Prefer PNG for formats that benefit from lossless or may have transparency
-    if (/(png|gif|bmp|tiff|webp)/.test(t)) return 'image/png';
-    // Default to JPEG for camera photos (jpeg/heic/heif)
-    return 'image/jpeg';
-  }
-
-  async function compressCanvasToDataUrl(canvas, quality, targetMime) {
+  async function compressCanvasToDataUrl(canvas, quality) {
     try {
-      if (targetMime === 'image/png') {
-        return canvas.toDataURL('image/png');
-      }
       return canvas.toDataURL('image/jpeg', quality);
-    } catch (_) {
-      try {
-        return canvas.toDataURL('image/png');
-      } catch (e2) {
-        // Final fallback to a slightly lower JPEG quality
-        return canvas.toDataURL('image/jpeg', Math.max(0.6, (quality || 0.75) - 0.2));
-      }
+    } catch (e) {
+      // Fallback to PNG if JPEG fails
+      return canvas.toDataURL('image/png');
     }
   }
 
@@ -433,27 +350,16 @@ document.addEventListener('DOMContentLoaded', function () {
       minQuality: 0.6,
       perImageLimit: 300 * 1024 // characters (base64 length)
     }, cfg || {});
-    const targetMime = pickTargetMime(file && file.type);
+
+    const initial = await readFileAsDataURL(file);
     let quality = config.initialQuality;
     let maxW = config.maxW;
     let maxH = config.maxH;
     let attempts = 0;
     let out = '';
     while (attempts < 6) {
-      let canvas;
-      try {
-        canvas = await fileToCanvas(file, maxW, maxH);
-      } catch (decodeErr) {
-        // If the browser cannot decode this format to canvas, try storing the original data URL
-        try {
-          const initial = await readFileAsDataURL(file);
-          if (typeof initial === 'string' && initial.length <= config.perImageLimit) {
-            return initial; // Store as-is (e.g., HEIC on Safari)
-          }
-        } catch (_) {}
-        throw decodeErr;
-      }
-      out = await compressCanvasToDataUrl(canvas, quality, targetMime);
+      const canvas = await dataUrlToCanvas(initial, maxW, maxH);
+      out = await compressCanvasToDataUrl(canvas, quality);
       if (out.length <= config.perImageLimit) break;
       // Reduce quality first, then dimensions if needed
       if (quality > config.minQuality) {
@@ -485,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const data = await prepareImageData(f, cfgByCount);
         results.push(data);
       } catch (e) {
-        console.warn('Skipping unsupported/too-large image:', e);
+        console.warn('Skipping too-large image:', e);
       }
     }
     return results;
