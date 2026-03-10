@@ -2489,6 +2489,53 @@ footer.bg-dark {
     font-size: 21px;
 }
 
+.footer-phone-link {
+    position: relative;
+    display: inline-flex;
+    padding: 5px;
+    border-radius: 14px;
+}
+
+.footer-phone-link::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 15px;
+    border: 1px solid rgba(153, 246, 198, 0.62);
+    animation: phoneOrbit 2.5s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes phoneOrbit {
+    0% {
+        transform: rotate(0deg);
+        opacity: 0.74;
+    }
+    50% {
+        transform: rotate(-180deg);
+        opacity: 1;
+    }
+    100% {
+        transform: rotate(-360deg);
+        opacity: 0.74;
+    }
+}
+
+.footer-social-phone-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(145deg, #10b981, #22c55e 52%, #059669);
+    box-shadow: 0 12px 20px rgba(5, 85, 52, 0.33);
+}
+
+.footer-social-phone-badge i {
+    font-size: 20px;
+}
+
 .footer-quote-link {
     position: relative;
     display: inline-flex;

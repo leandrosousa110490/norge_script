@@ -516,6 +516,21 @@ function initEnhancedFooterContent() {
 
     const socialWrap = container.querySelector('.col-lg-3 .d-flex');
     if (socialWrap) {
+        if (!socialWrap.querySelector('.footer-phone-link')) {
+            const phoneNode = container.querySelector('.footer-contact-row.is-phone a[href^="tel:"]');
+            const phoneHref = phoneNode ? phoneNode.getAttribute('href') : 'tel:+17863932372';
+            const phoneLink = document.createElement('a');
+            phoneLink.href = phoneHref || 'tel:+17863932372';
+            phoneLink.className = 'footer-phone-link me-3';
+            phoneLink.setAttribute('aria-label', 'Call Florida Sign Solution');
+            phoneLink.innerHTML = [
+                '<div class="footer-social-phone-badge footer-social-enhanced">',
+                '  <i class="bi bi-telephone-fill text-white"></i>',
+                '</div>'
+            ].join('');
+            socialWrap.appendChild(phoneLink);
+        }
+
         if (!socialWrap.querySelector('.footer-email-link')) {
             const emailLink = document.createElement('a');
             emailLink.href = 'mailto:floridasignsolution@gmail.com';
