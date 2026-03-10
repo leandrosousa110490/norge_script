@@ -1,532 +1,712 @@
 /**
- * Sign Placement Game
- * A fun interactive game where users place a sign on a storefront
- * with confetti celebration and animated elements
+ * Sign Sprint Game
+ * High-performance canvas game for the contact page.
  */
+(function () {
+  'use strict';
 
-// Initialize the game once DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Only initialize if the game container exists
-    if(document.getElementById('sign-game-container')) {
-        initSignGame();
-        initAnimations();
+  document.addEventListener('DOMContentLoaded', function () {
+    var canvas = document.getElementById('sign-game-canvas');
+    var shell = document.getElementById('sign-game-shell');
+    if (!canvas || !shell) return;
+    initSignSprintGame(canvas, shell);
+  });
+
+  function initSignSprintGame(canvas, shell) {
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    var statusNode = document.getElementById('game-status-text');
+    var timerNode = document.getElementById('game-timer');
+    var scoreNode = document.getElementById('game-score');
+    var overlayNode = document.getElementById('sign-game-overlay');
+    var overlayTitleNode = document.getElementById('game-overlay-title');
+    var overlayMessageNode = document.getElementById('game-overlay-message');
+    var startBtn = document.getElementById('game-start-btn');
+    var restartBtn = document.getElementById('game-restart-btn');
+
+    var W = 960;
+    var H = 540;
+    var FIXED = 1 / 60;
+    var rafId = null;
+    var lastTs = 0;
+    var acc = 0;
+
+    var viewport = {
+      width: W,
+      height: H,
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      dpr: Math.min(window.devicePixelRatio || 1, 2)
+    };
+
+    var pointer = { id: null, active: false, dragOffsetX: 0, dragOffsetY: 0 };
+    var state = createInitialState();
+
+    showOverlay('Sign Sprint', 'Complete 5 installs. Drag the sign into the glowing target zone before time runs out.');
+    updateHud();
+    resizeCanvas();
+    render();
+
+    if (startBtn) startBtn.addEventListener('click', startRound);
+    if (restartBtn) restartBtn.addEventListener('click', startRound);
+
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove, { passive: true });
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+    window.addEventListener('touchcancel', onTouchEnd);
+
+    window.addEventListener('resize', resizeCanvas);
+    document.addEventListener('fullscreenchange', resizeCanvas);
+    window.addEventListener('keydown', onKeyDown);
+
+    window.render_game_to_text = function () { return JSON.stringify(renderStateToText()); };
+    window.advanceTime = function (ms) {
+      var steps = Math.max(1, Math.round(ms / (1000 / 60)));
+      for (var i = 0; i < steps; i += 1) update(FIXED);
+      render();
+      return window.render_game_to_text();
+    };
+
+    startLoop();
+
+    function createInitialState() {
+      var tw = 208;
+      var th = 88;
+      return {
+        mode: 'ready',
+        timeRemaining: 42,
+        score: 0,
+        installs: 0,
+        goalInstalls: 5,
+        combo: 0,
+        bestCombo: 0,
+        worldTime: 0,
+        clouds: [
+          { x: 80, y: 74, speed: 9, size: 1.1 },
+          { x: 290, y: 112, speed: 13, size: 0.85 },
+          { x: 520, y: 70, speed: 11, size: 1.2 },
+          { x: 760, y: 104, speed: 10, size: 0.95 }
+        ],
+        cars: createCars(),
+        target: {
+          width: tw,
+          height: th,
+          baseX: W * 0.5 - tw * 0.5,
+          x: W * 0.5 - tw * 0.5,
+          y: H * 0.24,
+          pulse: 0,
+          flash: 0
+        },
+        sign: {
+          width: 194,
+          height: 74,
+          x: W * 0.12,
+          y: H * 0.72,
+          homeX: W * 0.12,
+          homeY: H * 0.72,
+          dragging: false,
+          returning: false,
+          returnSpeed: 8,
+          rotation: 0,
+          prevX: W * 0.12
+        },
+        particles: []
+      };
     }
-});
 
-/**
- * Initialize the sign placement game
- */
-function initSignGame() {
-    const gameContainer = document.getElementById('sign-game-container');
-    const signElement = document.getElementById('draggable-sign');
-    const targetArea = document.getElementById('sign-target-area');
-    let isDragging = false;
-    let dragOffsetX, dragOffsetY;
-    let isPlaced = false;
-    
-    // Set up initial state
-    if(!gameContainer || !signElement || !targetArea) return;
-    
-    // Set initial position for the sign - keep it in the upper half of the game area
-    signElement.style.left = '10%';
-    signElement.style.top = '30%';
-    
-    // Ensure sign is visible initially with proper z-index
-    signElement.style.zIndex = '6';
-    
-    // Setup dragging events for the sign
-    signElement.addEventListener('mousedown', startDrag);
-    signElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-    
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    
-    document.addEventListener('mouseup', endDrag);
-    document.addEventListener('touchend', endDrag);
-    
-    // Functions for dragging
-    function startDrag(e) {
-        if(isPlaced) return;
-        
-        // Prevent event from propagating
-        e.stopPropagation();
-        
-        isDragging = true;
-        
-        // Calculate the offset of the mouse pointer from the element's top-left corner
-        const rect = signElement.getBoundingClientRect();
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
-        
-        // Add dragging class for visual feedback
-        signElement.classList.add('dragging');
-        
-        // Ensure sign is visible during drag
-        signElement.style.zIndex = '100';
-        
-        // Prevent default behavior to avoid text selection, etc.
-        e.preventDefault();
-        
-        // Play sound effect
-        playSound('pickup');
+    function createCars() {
+      return [
+        { x: -120, laneY: H * 0.83, speed: 88, colorA: '#f35d4b', colorB: '#b72b1f', scale: 1 },
+        { x: 240, laneY: H * 0.875, speed: 104, colorA: '#46a5ff', colorB: '#1f5ea8', scale: 0.92 },
+        { x: 640, laneY: H * 0.83, speed: 96, colorA: '#ffd358', colorB: '#c5901f', scale: 1.04 },
+        { x: 900, laneY: H * 0.875, speed: 112, colorA: '#56d48b', colorB: '#2b8f56', scale: 0.9 }
+      ];
+    }
 
-        // Hide instructions
-        const instructions = gameContainer.querySelector('.game-instructions');
-        if (instructions) {
-            instructions.style.display = 'none';
+    function startRound() {
+      state = createInitialState();
+      state.mode = 'playing';
+      pointer.active = false;
+      pointer.id = null;
+      hideOverlay();
+      updateHud();
+    }
+
+    function finishRound(success) {
+      state.mode = success ? 'won' : 'lost';
+      pointer.active = false;
+      pointer.id = null;
+      state.sign.dragging = false;
+      state.sign.returning = false;
+      if (success) {
+        spawnConfetti(state.target.x + state.target.width * 0.5, state.target.y + state.target.height * 0.5, 130);
+        showOverlay('Installation Crew MVP', 'Completed ' + state.installs + '/' + state.goalInstalls + ' installs with a best combo of ' + state.bestCombo + '. Final score: ' + state.score + '.');
+      } else {
+        showOverlay('Time Up', 'Completed ' + state.installs + '/' + state.goalInstalls + ' installs. Replay and chain combos for a higher score.');
+      }
+      updateHud();
+    }
+
+    function startLoop() {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      lastTs = performance.now();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function loop(ts) {
+      var delta = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000));
+      lastTs = ts;
+      acc += delta;
+      while (acc >= FIXED) {
+        update(FIXED);
+        acc -= FIXED;
+      }
+      render();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      state.worldTime += dt;
+      var sway = Math.sin(state.worldTime * 1.58) * 32;
+      state.target.x = state.target.baseX + sway;
+      state.target.pulse = (Math.sin(state.worldTime * 3.25) + 1) * 0.5;
+      state.target.flash = Math.max(0, state.target.flash - dt * 2.8);
+
+      for (var ci = 0; ci < state.clouds.length; ci += 1) {
+        state.clouds[ci].x += state.clouds[ci].speed * dt;
+        if (state.clouds[ci].x > W + 140) state.clouds[ci].x = -140;
+      }
+
+      for (var carIndex = 0; carIndex < state.cars.length; carIndex += 1) {
+        state.cars[carIndex].x += state.cars[carIndex].speed * dt;
+        if (state.cars[carIndex].x > W + 160) {
+          state.cars[carIndex].x = -180;
         }
-    }
-    
-    function handleTouchStart(e) {
-        if(isPlaced) return;
-        
-        // Prevent event from propagating
-        e.stopPropagation();
-        
-        const touch = e.touches[0];
-        
-        // Set the event's clientX and clientY to the touch's coordinates
-        const touchEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            preventDefault: () => e.preventDefault(),
-            stopPropagation: () => e.stopPropagation()
-        };
-        
-        // Call the mousedown handler with the touch coordinates
-        startDrag(touchEvent);
-    }
-    
-    function drag(e) {
-        if(!isDragging) return;
-        
-        const gameContainerRect = gameContainer.getBoundingClientRect();
-        // Calculate the new position relative to the gameContainer
-        const newLeft = e.clientX - gameContainerRect.left - dragOffsetX;
-        const newTop = e.clientY - gameContainerRect.top - dragOffsetY;
-        
-        // Update the element's position
-        signElement.style.left = `${newLeft}px`;
-        signElement.style.top = `${newTop}px`;
-        
-        // Check if sign is over the target area
-        checkTargetOverlap(newLeft, newTop); // x, y params are not actually used in checkTargetOverlap
-        
-        e.preventDefault();
-    }
-    
-    function handleTouchMove(e) {
-        if(!isDragging) return;
-        
-        const touch = e.touches[0];
-        
-        // Call the drag handler with the touch coordinates
-        const touchEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            preventDefault: () => e.preventDefault()
-        };
-        
-        drag(touchEvent);
-    }
-    
-    function endDrag(e) {
-        if(!isDragging || isPlaced) return; // Do not proceed if not dragging or already placed
-        isDragging = false;
-        
-        // Remove dragging class
-        signElement.classList.remove('dragging');
-        
-        // Reset z-index after dragging ends
-        setTimeout(() => {
-            if (!isPlaced) { // Only reset z-index if not successfully placed
-                signElement.style.zIndex = '6';
-            }
-        }, 100);
-        
-        // Check if sign is positioned correctly in the target area
-        const signRect = signElement.getBoundingClientRect();
-        const targetRect = targetArea.getBoundingClientRect();
-        
-        // If the sign is mostly within the target area
-        if(isOverlapping(signRect, targetRect)) {
-            placeSignCorrectly();
-        } else {
-            // Play drop sound
-            playSound('drop');
+      }
+
+      if (state.mode === 'playing') {
+        state.timeRemaining = Math.max(0, state.timeRemaining - dt);
+        if (state.timeRemaining <= 0) finishRound(false);
+      }
+
+      if (state.sign.returning && !state.sign.dragging) {
+        var mix = Math.min(1, dt * state.sign.returnSpeed);
+        state.sign.x += (state.sign.homeX - state.sign.x) * mix;
+        state.sign.y += (state.sign.homeY - state.sign.y) * mix;
+        state.sign.rotation += (0 - state.sign.rotation) * Math.min(1, dt * 9);
+        if (Math.abs(state.sign.x - state.sign.homeX) < 0.8 && Math.abs(state.sign.y - state.sign.homeY) < 0.8) {
+          state.sign.x = state.sign.homeX;
+          state.sign.y = state.sign.homeY;
+          state.sign.rotation = 0;
+          state.sign.returning = false;
         }
-    }
-    
-    function checkTargetOverlap(x, y) {
-        if (isPlaced) return; // Don't check overlap if sign already placed
-        // Get the rectangles of the sign and target
-        const signRect = signElement.getBoundingClientRect();
-        const targetRect = targetArea.getBoundingClientRect();
-        
-        // Add a visual cue when hovering over the target area
-        if(isOverlapping(signRect, targetRect)) {
-            if(!targetArea.classList.contains('target-hover')) {
-                targetArea.classList.add('target-hover');
-                playSound('hover');
-            }
-        } else {
-            targetArea.classList.remove('target-hover');
+      }
+
+      for (var i = state.particles.length - 1; i >= 0; i -= 1) {
+        var p = state.particles[i];
+        p.life -= dt;
+        if (p.life <= 0) {
+          state.particles.splice(i, 1);
+          continue;
         }
-    }
-    
-    function isOverlapping(rect1, rect2) {
-        // Calculate overlap area
-        const overlapArea = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left)) *
-                           Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
-        
-        // Calculate sign area
-        const signArea = rect1.width * rect1.height;
-        
-        // If at least 50% of the sign is over the target area
-        return (overlapArea / signArea) > 0.5;
-    }
-    
-    function placeSignCorrectly() {
-        if (isPlaced) return; // Prevent placing multiple times
+        p.vy += 620 * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rotation += p.spin * dt;
+      }
 
-        // Center the sign in the target area
-        const targetRect = targetArea.getBoundingClientRect();
-        const signRect = signElement.getBoundingClientRect();
-        const gameContainerRect = gameContainer.getBoundingClientRect();
-        
-        // Calculate viewport-relative centered position for the sign's top-left
-        const viewportCenterX = targetRect.left + (targetRect.width - signRect.width) / 2;
-        const viewportCenterY = targetRect.top + (targetRect.height - signRect.height) / 2;
+      updateHud();
+    }
 
-        // Convert viewport-relative position to gameContainer-relative position
-        const finalSignLeft = viewportCenterX - gameContainerRect.left;
-        const finalSignTop = viewportCenterY - gameContainerRect.top;
-        
-        // Position the sign
-        signElement.style.left = `${finalSignLeft}px`;
-        signElement.style.top = `${finalSignTop}px`;
-        
-        // After positioning, set the flag to prevent further dragging and interaction
-        isPlaced = true; 
-        signElement.style.zIndex = '6';
-        signElement.style.cursor = 'default';
-        
-        // Add classes for animation
-        signElement.classList.add('sign-placed');
-        targetArea.classList.add('sign-placed');
-        targetArea.classList.remove('target-hover'); // Remove hover effect
-        
-        // Animate the building windows (make them brighter)
-        document.querySelectorAll('.building-window').forEach(window => {
-            window.classList.add('window-light-on');
-        });
-        
-        // Animate the store elements
-        animateStoreElements();
-        
-        // Play success sound
-        playSound('success');
-        
-        // Display success message - ensure it's visible
-        const successMessage = document.getElementById('game-success-message');
-        if(successMessage) {
-            // Reset any previous state
-            successMessage.style.opacity = '0';
-            successMessage.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            
-            // Show the message
-            successMessage.style.display = 'block';
-            
-            // Trigger animation with slight delay for smooth transition
-            setTimeout(() => {
-                successMessage.style.opacity = '1';
-                successMessage.style.transform = 'translate(-50%, -50%) scale(1)';
-            }, 50);
+    function updateHud() {
+      if (statusNode) {
+        if (state.mode === 'playing') statusNode.textContent = 'Install ' + state.installs + '/' + state.goalInstalls;
+        else if (state.mode === 'won') statusNode.textContent = 'Completed';
+        else if (state.mode === 'lost') statusNode.textContent = 'Try Again';
+        else statusNode.textContent = 'Ready';
+      }
+      if (timerNode) timerNode.textContent = state.timeRemaining.toFixed(1) + 's';
+      if (scoreNode) scoreNode.textContent = String(state.score);
+    }
+
+    function showOverlay(title, message) {
+      if (overlayTitleNode) overlayTitleNode.textContent = title;
+      if (overlayMessageNode) overlayMessageNode.textContent = message;
+      if (overlayNode) overlayNode.classList.add('is-visible');
+    }
+
+    function hideOverlay() { if (overlayNode) overlayNode.classList.remove('is-visible'); }
+
+    function onKeyDown(event) {
+      var key = (event.key || '').toLowerCase();
+      if (key === 'f') {
+        event.preventDefault();
+        if (!document.fullscreenElement) {
+          if (shell.requestFullscreen) shell.requestFullscreen().catch(function () {});
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen().catch(function () {});
         }
-        
-        // Trigger confetti celebration
-        startConfetti();
+      } else if (key === 'escape' && document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(function () {});
+      }
     }
-    
-    /**
-     * Animate store elements when sign is placed
-     */
-    function animateStoreElements() {
-        // Add animation to store windows
-        document.querySelectorAll('.store-window').forEach(window => {
-            window.classList.add('store-window-glow');
-        });
-        
-        // Add animation to store name
-        const storeName = document.querySelector('.store-name');
-        if (storeName) {
-            storeName.textContent = 'FLORIDA SIGN';
-            storeName.classList.add('store-name-active');
+
+    function onPointerDown(event) { if (state.mode === 'playing' && startDragAt(event.clientX, event.clientY, event.pointerId, true)) event.preventDefault(); }
+    function onPointerMove(event) { if (pointer.active && pointer.id === event.pointerId) moveDragAt(event.clientX, event.clientY); }
+    function onPointerUp(event) { if (pointer.active && pointer.id === event.pointerId) endDrag(event.pointerId, true); }
+    function onMouseDown(event) { if (!pointer.active) startDragAt(event.clientX, event.clientY, 'mouse', false); }
+    function onMouseMove(event) { if (pointer.active && pointer.id === 'mouse') moveDragAt(event.clientX, event.clientY); }
+    function onMouseUp() { if (pointer.active && pointer.id === 'mouse') endDrag('mouse', false); }
+    function onTouchStart(event) { if (!pointer.active && event.touches && event.touches.length) { var t = event.touches[0]; startDragAt(t.clientX, t.clientY, 'touch', false); event.preventDefault(); } }
+    function onTouchMove(event) { if (pointer.active && pointer.id === 'touch' && event.touches && event.touches.length) { var t = event.touches[0]; moveDragAt(t.clientX, t.clientY); event.preventDefault(); } }
+    function onTouchEnd() { if (pointer.active && pointer.id === 'touch') endDrag('touch', false); }
+
+    function startDragAt(clientX, clientY, dragId, capturePointer) {
+      if (state.mode !== 'playing') return false;
+      var world = pointerToWorld(clientX, clientY);
+      if (!world) return false;
+      if (!isPointInRect(world.x, world.y, state.sign.x, state.sign.y, state.sign.width, state.sign.height)) return false;
+      pointer.active = true;
+      pointer.id = dragId;
+      pointer.dragOffsetX = world.x - state.sign.x;
+      pointer.dragOffsetY = world.y - state.sign.y;
+      state.sign.dragging = true;
+      state.sign.returning = false;
+      if (capturePointer && typeof canvas.setPointerCapture === 'function' && typeof dragId === 'number') canvas.setPointerCapture(dragId);
+      return true;
+    }
+
+    function moveDragAt(clientX, clientY) {
+      if (!pointer.active || !state.sign.dragging) return;
+      var world = pointerToWorld(clientX, clientY);
+      if (!world) return;
+      var maxX = W - state.sign.width;
+      var maxY = H - state.sign.height;
+      state.sign.prevX = state.sign.x;
+      state.sign.x = clamp(world.x - pointer.dragOffsetX, 0, maxX);
+      state.sign.y = clamp(world.y - pointer.dragOffsetY, 0, maxY);
+      var velocityX = state.sign.x - state.sign.prevX;
+      state.sign.rotation = clamp(velocityX * 0.02, -0.2, 0.2);
+    }
+
+    function endDrag(dragId, releasePointerCapture) {
+      pointer.active = false;
+      pointer.id = null;
+      state.sign.dragging = false;
+      if (releasePointerCapture && typeof canvas.releasePointerCapture === 'function' && typeof dragId === 'number') canvas.releasePointerCapture(dragId);
+      if (state.mode !== 'playing') return;
+
+      var overlap = overlapRatio(state.sign.x, state.sign.y, state.sign.width, state.sign.height, state.target.x, state.target.y, state.target.width, state.target.height);
+      if (overlap >= 0.58) {
+        state.installs += 1;
+        state.combo += 1;
+        state.bestCombo = Math.max(state.bestCombo, state.combo);
+        state.score += 150 + state.combo * 35 + Math.round(state.timeRemaining * 4);
+        state.timeRemaining = Math.min(60, state.timeRemaining + 2.1);
+        state.target.flash = 1;
+        spawnConfetti(state.target.x + state.target.width * 0.5, state.target.y + state.target.height * 0.5, 52);
+        if (state.installs >= state.goalInstalls) {
+          finishRound(true);
+          return;
         }
+        relocateTarget();
+        state.sign.returning = true;
+        state.sign.rotation = 0;
+      } else {
+        state.combo = 0;
+        state.timeRemaining = Math.max(0, state.timeRemaining - 2.15);
+        state.sign.returning = true;
+        state.sign.rotation = 0;
+        spawnSparkBurst(state.sign.x + state.sign.width * 0.5, state.sign.y + state.sign.height * 0.5, 18);
+        if (state.timeRemaining <= 0) finishRound(false);
+      }
     }
-    
-    // Simple sound effects system
-    function playSound(type) {
-        // Skip sounds if no Web Audio API support
-        if (typeof AudioContext === 'undefined' && typeof webkitAudioContext === 'undefined') return;
-        
-        // Create audio context if it doesn't exist
-        if (!window.gameAudioContext) {
-            try {
-                window.gameAudioContext = new (AudioContext || webkitAudioContext)();
-            } catch (e) {
-                console.warn('Web Audio API not supported in this browser');
-                return;
-            }
+
+    function relocateTarget() {
+      var span = W * 0.2;
+      var randomOffset = (Math.random() * 2 - 1) * span;
+      state.target.baseX = clamp(W * 0.5 - state.target.width * 0.5 + randomOffset, 90, W - state.target.width - 90);
+      state.target.y = H * (0.2 + Math.random() * 0.18);
+    }
+
+    function pointerToWorld(clientX, clientY) {
+      var rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+      var localX = clientX - rect.left;
+      var localY = clientY - rect.top;
+      return { x: (localX - viewport.offsetX) / viewport.scale, y: (localY - viewport.offsetY) / viewport.scale };
+    }
+
+    function render() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(viewport.dpr, viewport.dpr);
+      ctx.translate(viewport.offsetX, viewport.offsetY);
+      ctx.scale(viewport.scale, viewport.scale);
+      drawScene();
+      drawTarget();
+      drawSign();
+      drawParticles();
+      ctx.restore();
+    }
+
+    function drawScene() {
+      var grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#b8ddf9');
+      grad.addColorStop(0.42, '#83bff0');
+      grad.addColorStop(1, '#1c314b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      var pulse = 0.22 + state.target.pulse * 0.25;
+      ctx.fillStyle = 'rgba(255, 222, 129,' + pulse.toFixed(2) + ')';
+      ctx.beginPath();
+      ctx.arc(W * 0.12, H * 0.16, 72, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (var ci = 0; ci < state.clouds.length; ci += 1) {
+        var c = state.clouds[ci];
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, 44 * c.size, 24 * c.size, 0, 0, Math.PI * 2);
+        ctx.ellipse(c.x + 34 * c.size, c.y + 3 * c.size, 32 * c.size, 19 * c.size, 0, 0, Math.PI * 2);
+        ctx.ellipse(c.x - 32 * c.size, c.y + 5 * c.size, 28 * c.size, 17 * c.size, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawCityBackdrop();
+      drawRoadWithTraffic();
+      drawStorefrontRealistic();
+
+      if (state.sign.dragging) {
+        var gx = state.sign.x + state.sign.width * 0.5;
+        var gy = state.sign.y + state.sign.height * 0.5;
+        ctx.strokeStyle = 'rgba(184, 234, 255, 0.72)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(gx, 18);
+        ctx.lineTo(gx, gy - state.sign.height * 0.45);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(207, 244, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(gx, 18, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawCityBackdrop() {
+      for (var i = 0; i < 9; i += 1) {
+        var bx = i * 118 - 22;
+        var bw = 96 + (i % 4) * 18;
+        var bh = 148 + (i % 5) * 44;
+        var by = 168 - (i % 3) * 10;
+        var buildingGradient = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
+        buildingGradient.addColorStop(0, i % 2 === 0 ? '#2e476a' : '#395780');
+        buildingGradient.addColorStop(1, i % 2 === 0 ? '#21344d' : '#29415f');
+        ctx.fillStyle = buildingGradient;
+        roundRect(ctx, bx, by, bw, bh, 3);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(18, 33, 53, 0.4)';
+        ctx.fillRect(bx + bw - 4, by + 10, 3, bh - 12);
+
+        var rows = 4 + (i % 3);
+        var cols = 3 + (i % 2);
+        for (var row = 0; row < rows; row += 1) {
+          for (var col = 0; col < cols; col += 1) {
+            var wx = bx + 10 + col * ((bw - 24) / Math.max(1, cols - 1));
+            var wy = by + 14 + row * ((bh - 32) / Math.max(1, rows - 1));
+            var twinkle = (Math.sin(state.worldTime * 2.4 + row * 1.3 + col * 0.7 + i) + 1) * 0.5;
+            ctx.fillStyle = 'rgba(255, 225, 168,' + (0.24 + twinkle * 0.38).toFixed(2) + ')';
+            ctx.fillRect(wx, wy, 10, 14);
+          }
         }
-        
-        const context = window.gameAudioContext;
-        const oscillator = context.createOscillator();
-        const gainNode = context.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(context.destination);
-        
-        // Configure sound based on type
-        switch(type) {
-            case 'pickup':
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(330, context.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(550, context.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.1, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
-                oscillator.start();
-                oscillator.stop(context.currentTime + 0.2);
-                break;
-                
-            case 'drop':
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(550, context.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(330, context.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.1, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
-                oscillator.start();
-                oscillator.stop(context.currentTime + 0.2);
-                break;
-                
-            case 'hover':
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(440, context.currentTime);
-                gainNode.gain.setValueAtTime(0.05, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.1);
-                oscillator.start();
-                oscillator.stop(context.currentTime + 0.1);
-                break;
-                
-            case 'success':
-                // Play a success arpeggio
-                playSuccessArpeggio();
-                break;
-                
-            // 'reset' case for sound is no longer needed
-        }
+      }
     }
-    
-    function playSuccessArpeggio() {
-        if (!window.gameAudioContext) return;
-        
-        const context = window.gameAudioContext;
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        const noteLength = 0.1;
-        
-        notes.forEach((frequency, index) => {
-            const oscillator = context.createOscillator();
-            const gainNode = context.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(context.destination);
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.value = frequency;
-            
-            gainNode.gain.setValueAtTime(0.15, context.currentTime + index * noteLength);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + (index + 1) * noteLength);
-            
-            oscillator.start(context.currentTime + index * noteLength);
-            oscillator.stop(context.currentTime + (index + 1) * noteLength);
-        });
+
+    function drawRoadWithTraffic() {
+      var roadTop = H * 0.78;
+      ctx.fillStyle = '#1d2f45';
+      ctx.fillRect(0, roadTop, W, H * 0.22);
+
+      var laneGrad = ctx.createLinearGradient(0, roadTop, 0, H);
+      laneGrad.addColorStop(0, 'rgba(255,255,255,0.08)');
+      laneGrad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = laneGrad;
+      ctx.fillRect(0, roadTop, W, H * 0.22);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.34)';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([22, 14]);
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.885);
+      ctx.lineTo(W, H * 0.885);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(92, 224, 255, 0.34)';
+      ctx.fillRect(0, roadTop, W, 3);
+
+      for (var carIdx = 0; carIdx < state.cars.length; carIdx += 1) {
+        drawCar(state.cars[carIdx]);
+      }
     }
-}
 
-/**
- * Initialize animations for visual elements
- */
-function initAnimations() {
-    // Other animation initializations can go here
-    randomWindowBlink(); // Keep this if you want random window blinking
-    // createMultipleCars(); // Removed this line
-}
+    function drawCar(car) {
+      var width = 64 * car.scale;
+      var height = 22 * car.scale;
+      var x = car.x;
+      var y = car.laneY;
+      var body = ctx.createLinearGradient(x, y, x, y + height);
+      body.addColorStop(0, car.colorA);
+      body.addColorStop(1, car.colorB);
+      ctx.fillStyle = body;
+      roundRect(ctx, x, y - height, width, height, 8 * car.scale);
+      ctx.fill();
 
-/**
- * Randomly make windows blink/change brightness
- */
-function randomWindowBlink() {
-    const windows = document.querySelectorAll('.building-window');
-    if(windows.length === 0) return;
-    
-    // Don't blink if sign is placed (windows stay bright)
-    if(document.querySelector('.sign-placed')) return;
-    
-    // Pick a random window
-    const randomWindow = windows[Math.floor(Math.random() * windows.length)];
-    
-    // Add blink class
-    randomWindow.classList.add('window-blink');
-    
-    // Remove after animation completes
-    setTimeout(() => {
-        randomWindow.classList.remove('window-blink');
-    }, 500);
-}
+      ctx.fillStyle = 'rgba(201, 233, 255, 0.72)';
+      roundRect(ctx, x + width * 0.18, y - height * 0.9, width * 0.42, height * 0.42, 5 * car.scale);
+      ctx.fill();
 
-/**
- * Confetti animation
- * Based on a simplified version of canvas-confetti
- */
-let confettiCanvas, confettiContext;
-let confettiAnimationId;
-const particles = [];
-const particleCount = 200;
+      ctx.fillStyle = '#101820';
+      ctx.beginPath();
+      ctx.arc(x + width * 0.22, y + 1, 6 * car.scale, 0, Math.PI * 2);
+      ctx.arc(x + width * 0.76, y + 1, 6 * car.scale, 0, Math.PI * 2);
+      ctx.fill();
 
-function startConfetti() {
-    // If there's an existing animation, stop it first
-    stopConfetti();
-    
-    // Create canvas for confetti
-    confettiCanvas = document.createElement('canvas');
-    confettiCanvas.id = 'confetti-canvas';
-    confettiCanvas.style.position = 'fixed';
-    confettiCanvas.style.top = '0';
-    confettiCanvas.style.left = '0';
-    confettiCanvas.style.width = '100%';
-    confettiCanvas.style.height = '100%';
-    confettiCanvas.style.pointerEvents = 'none';
-    confettiCanvas.style.zIndex = '9999';
-    document.body.appendChild(confettiCanvas);
-    
-    // Set canvas size
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-    
-    // Get context for drawing
-    confettiContext = confettiCanvas.getContext('2d');
-    
-    // Create particles
-    createParticles();
-    
-    // Start animation
-    animateConfetti();
-}
-
-function createParticles() {
-    // Clear existing particles
-    particles.length = 0;
-    
-    // Create new particles
-    for(let i = 0; i < particleCount; i++) {
-        particles.push({
-            x: Math.random() * confettiCanvas.width,
-            y: Math.random() * -confettiCanvas.height,
-            width: Math.random() * 10 + 5,
-            height: Math.random() * 6 + 4,
-            speed: Math.random() * 5 + 2,
-            angle: Math.random() * 6.28,
-            rotation: Math.random() * 6.28,
-            rotationSpeed: Math.random() * 0.2 - 0.1,
-            color: getRandomColor(),
-            // Add some shape variety
-            shape: Math.random() > 0.5 ? 'rect' : 'circle'
-        });
+      ctx.fillStyle = '#d8e3ed';
+      ctx.beginPath();
+      ctx.arc(x + width * 0.22, y + 1, 2.8 * car.scale, 0, Math.PI * 2);
+      ctx.arc(x + width * 0.76, y + 1, 2.8 * car.scale, 0, Math.PI * 2);
+      ctx.fill();
     }
-}
 
-function getRandomColor() {
-    // Brand colors + some bright festive colors
-    const colors = [
-        '#3498db', // Primary blue
-        '#e74c3c', // Red
-        '#2ecc71', // Green
-        '#f39c12', // Orange
-        '#9b59b6', // Purple
-        '#ffee58', // Yellow
-        '#4db6ac', // Teal
-        '#ff80ab', // Pink
-        '#ffd700', // Gold
-        '#00bcd4'  // Cyan
-    ];
-    
-    return colors[Math.floor(Math.random() * colors.length)];
-}
+    function drawStorefrontRealistic() {
+      var sx = W * 0.22;
+      var sy = H * 0.34;
+      var sw = W * 0.56;
+      var sh = H * 0.41;
 
-function animateConfetti() {
-    // Clear canvas
-    confettiContext.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-    
-    // Update and draw particles
-    for(let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        
-        // Update position
-        p.y += p.speed;
-        p.x += Math.sin(p.angle) * 2;
-        
-        // Update rotation
-        p.rotation += p.rotationSpeed;
-        
-        // Draw particle based on shape
-        confettiContext.save();
-        confettiContext.translate(p.x, p.y);
-        confettiContext.rotate(p.rotation);
-        confettiContext.fillStyle = p.color;
-        
-        if(p.shape === 'rect') {
-            // Rectangle
-            confettiContext.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
-        } else {
-            // Circle
-            confettiContext.beginPath();
-            confettiContext.arc(0, 0, p.width / 2, 0, Math.PI * 2);
-            confettiContext.fill();
-        }
-        
-        confettiContext.restore();
-        
-        // Reset particle if it goes off screen
-        if(p.y > confettiCanvas.height) {
-            p.y = Math.random() * -100;
-            p.x = Math.random() * confettiCanvas.width;
-        }
-    }
-    
-    // Continue animation
-    confettiAnimationId = requestAnimationFrame(animateConfetti);
-    
-    // Stop after 8 seconds (more festive!)
-    setTimeout(stopConfetti, 8000);
-}
+      var facade = ctx.createLinearGradient(sx, sy, sx, sy + sh);
+      facade.addColorStop(0, '#efe0c6');
+      facade.addColorStop(1, '#c9ab84');
+      ctx.fillStyle = facade;
+      roundRect(ctx, sx, sy, sw, sh, 10);
+      ctx.fill();
 
-function stopConfetti() {
-    // Stop animation
-    if(confettiAnimationId) {
-        cancelAnimationFrame(confettiAnimationId);
-        confettiAnimationId = null;
+      ctx.fillStyle = '#b7c4d2';
+      ctx.fillRect(sx - 8, sy + sh - 8, sw + 16, 10);
+
+      ctx.fillStyle = '#c95d43';
+      roundRect(ctx, sx - 10, sy - 38, sw + 20, 44, 12);
+      ctx.fill();
+
+      var awning = ctx.createLinearGradient(sx - 10, sy - 36, sx + sw + 10, sy + 8);
+      awning.addColorStop(0, '#e26d52');
+      awning.addColorStop(0.5, '#b44e3c');
+      awning.addColorStop(1, '#e26d52');
+      ctx.fillStyle = awning;
+      ctx.fillRect(sx - 10, sy - 18, sw + 20, 17);
+
+      ctx.fillStyle = 'rgba(16, 34, 60, 0.92)';
+      roundRect(ctx, sx + 30, sy + 82, sw - 60, sh - 112, 8);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(107, 170, 223, 0.42)';
+      roundRect(ctx, sx + 48, sy + 100, sw - 96, sh - 152, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#27384d';
+      ctx.fillRect(sx + sw * 0.46, sy + sh - 136, sw * 0.08, 136);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.fillRect(sx + 52, sy + 104, sw - 104, 20);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 26px Oswald, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('FLORIDA SIGN SOLUTION', W * 0.5, sy + 34);
     }
-    
-    // Remove canvas
-    if(confettiCanvas) {
-        try {
-            document.body.removeChild(confettiCanvas);
-        } catch (e) {
-            // console.warn('Canvas already removed or other error');
-        }
-        confettiCanvas = null;
+
+    function drawTarget() {
+      var t = state.target;
+      var grow = 1 + t.pulse * 0.08;
+      var dw = t.width * grow;
+      var dh = t.height * grow;
+      var dx = t.x - (dw - t.width) * 0.5;
+      var dy = t.y - (dh - t.height) * 0.5;
+      var glow = 0.2 + t.pulse * 0.26 + t.flash * 0.36;
+      ctx.fillStyle = 'rgba(85, 238, 255,' + glow.toFixed(2) + ')';
+      roundRect(ctx, dx - 8, dy - 8, dw + 16, dh + 16, 14); ctx.fill();
+
+      ctx.fillStyle = 'rgba(206, 219, 230, 0.9)';
+      roundRect(ctx, t.x + 8, t.y + t.height * 0.45, t.width - 16, 10, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#7f8f9f';
+      for (var bolt = 0; bolt < 4; bolt += 1) {
+        var bx = t.x + 18 + bolt * ((t.width - 36) / 3);
+        ctx.beginPath();
+        ctx.arc(bx, t.y + t.height * 0.5, 2.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = state.mode === 'won' ? 'rgba(88, 255, 170, 0.95)' : 'rgba(92, 223, 255, 0.95)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.lineDashOffset = -state.worldTime * 36;
+      roundRect(ctx, dx, dy, dw, dh, 10); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = state.mode === 'won' ? 'rgba(88,255,170,0.2)' : 'rgba(92,223,255,0.14)';
+      roundRect(ctx, dx, dy, dw, dh, 10); ctx.fill();
+      ctx.fillStyle = 'rgba(232, 248, 255, 0.9)';
+      ctx.font = '700 15px Montserrat, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MOUNT RAIL', t.x + t.width * 0.5, t.y - 10);
     }
-    
-    // Clear particles array
-    particles.length = 0;
-} 
+
+    function drawSign() {
+      var s = state.sign;
+      ctx.save();
+      ctx.translate(s.x + s.width * 0.5, s.y + s.height * 0.5);
+      ctx.rotate(s.rotation);
+      ctx.translate(-s.width * 0.5, -s.height * 0.5);
+      ctx.fillStyle = 'rgba(6, 24, 46,' + (s.dragging ? 0.24 : 0.16).toFixed(2) + ')';
+      roundRect(ctx, 7, s.height - 2, s.width - 14, 14, 8); ctx.fill();
+      var panel = ctx.createLinearGradient(0, 0, 0, s.height);
+      panel.addColorStop(0, '#3abdfd');
+      panel.addColorStop(1, '#0a5faf');
+      ctx.fillStyle = panel; roundRect(ctx, 0, 0, s.width, s.height, 10); ctx.fill();
+      ctx.strokeStyle = 'rgba(209, 231, 250, 0.9)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, 3, 3, s.width - 6, s.height - 6, 8);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(80, 97, 116, 0.75)';
+      ctx.lineWidth = 1.6;
+      roundRect(ctx, 8, 8, s.width - 16, s.height - 16, 6);
+      ctx.stroke();
+      var shine = (Math.sin(state.worldTime * 3.2) + 1) * 0.5;
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.12 + shine * 0.12).toFixed(2) + ')';
+      ctx.fillRect(8, 8, s.width - 16, 10);
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      ctx.font = '700 20px Oswald, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('FLORIDA SIGN', s.width * 0.5, s.height * 0.6);
+      ctx.font = '700 10px Montserrat, sans-serif';
+      ctx.fillStyle = 'rgba(225, 241, 255, 0.9)';
+      ctx.fillText('INSTALLATION TEAM', s.width * 0.5, s.height * 0.79);
+
+      ctx.fillStyle = '#7f91a3';
+      for (var bolt = 0; bolt < 4; bolt += 1) {
+        var boltX = 16 + bolt * ((s.width - 32) / 3);
+        ctx.beginPath();
+        ctx.arc(boltX, 13, 2.3, 0, Math.PI * 2);
+        ctx.arc(boltX, s.height - 13, 2.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (var i = 0; i < state.particles.length; i += 1) {
+        var p = state.particles[i];
+        var alpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color.replace('{a}', alpha.toFixed(2));
+        ctx.fillRect(-p.size * 0.5, -p.size * 0.5, p.size, p.size);
+        ctx.restore();
+      }
+    }
+
+    function spawnConfetti(x, y, count) {
+      var palette = ['rgba(80, 199, 255, {a})','rgba(255, 214, 87, {a})','rgba(119, 255, 179, {a})','rgba(255, 123, 101, {a})'];
+      for (var i = 0; i < count; i += 1) {
+        var speed = 170 + Math.random() * 250;
+        var angle = Math.random() * Math.PI * 2;
+        var life = 0.8 + Math.random() * 0.8;
+        state.particles.push({ x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 100, size: 4 + Math.random() * 6, life: life, maxLife: life, rotation: Math.random() * Math.PI, spin: -7 + Math.random() * 14, color: palette[i % palette.length] });
+      }
+    }
+
+    function spawnSparkBurst(x, y, count) {
+      for (var i = 0; i < count; i += 1) {
+        var angle = (Math.PI * 2 * i) / count;
+        var speed = 90 + Math.random() * 90;
+        var life = 0.35 + Math.random() * 0.25;
+        state.particles.push({ x: x, y: y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, size: 3 + Math.random() * 2, life: life, maxLife: life, rotation: Math.random() * Math.PI, spin: -3 + Math.random() * 6, color: 'rgba(255, 218, 143, {a})' });
+      }
+    }
+
+    function renderStateToText() {
+      return {
+        coordinate_system: 'origin at top-left, +x right, +y down',
+        mode: state.mode,
+        timer_seconds: Number(state.timeRemaining.toFixed(2)),
+        score: state.score,
+        installs: state.installs,
+        goal_installs: state.goalInstalls,
+        combo: state.combo,
+        sign: { x: Number(state.sign.x.toFixed(2)), y: Number(state.sign.y.toFixed(2)), width: state.sign.width, height: state.sign.height, dragging: state.sign.dragging, returning: state.sign.returning },
+        target: { x: Number(state.target.x.toFixed(2)), y: Number(state.target.y.toFixed(2)), width: state.target.width, height: state.target.height, pulse: Number(state.target.pulse.toFixed(2)) },
+        cars: state.cars.map(function (car) {
+          return {
+            x: Number(car.x.toFixed(2)),
+            y: Number(car.laneY.toFixed(2)),
+            speed: car.speed
+          };
+        }),
+        particle_count: state.particles.length,
+        viewport: { width: viewport.width, height: viewport.height, scale: Number(viewport.scale.toFixed(3)) }
+      };
+    }
+
+    function resizeCanvas() {
+      var rect = shell.getBoundingClientRect();
+      var width = Math.max(300, Math.floor(rect.width));
+      var height = Math.floor(width * 9 / 16);
+      viewport.width = width;
+      viewport.height = height;
+      canvas.style.height = height + 'px';
+      canvas.width = Math.floor(width * viewport.dpr);
+      canvas.height = Math.floor(height * viewport.dpr);
+      viewport.scale = Math.min(width / W, height / H);
+      viewport.offsetX = (width - W * viewport.scale) * 0.5;
+      viewport.offsetY = (height - H * viewport.scale) * 0.5;
+      render();
+    }
+  }
+
+  function roundRect(ctx, x, y, width, height, radius) {
+    var r = Math.min(radius, width * 0.5, height * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  }
+
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+  function isPointInRect(px, py, rx, ry, rw, rh) { return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh; }
+
+  function overlapRatio(ax, ay, aw, ah, bx, by, bw, bh) {
+    var overlapW = Math.max(0, Math.min(ax + aw, bx + bw) - Math.max(ax, bx));
+    var overlapH = Math.max(0, Math.min(ay + ah, by + bh) - Math.max(ay, by));
+    var signArea = aw * ah;
+    if (signArea <= 0) return 0;
+    return (overlapW * overlapH) / signArea;
+  }
+})();

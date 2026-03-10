@@ -1,0 +1,201 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <title>Norge Signs Admin - Traffic</title>
+    <link rel="icon" href="../favicons/favicon.ico" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --border: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #06b6d4;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.32);
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      button, .btn-link {
+        border: 1px solid var(--border);
+        background: #0b1220;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 9px 12px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #073238;
+        font-weight: 700;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .kpi {
+        background: #0b1220;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .kpi .label { font-size: 12px; color: var(--muted); }
+      .kpi .value { margin-top: 5px; font-size: 23px; font-weight: 700; }
+      .grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 12px;
+      }
+      .chart {
+        height: 350px;
+      }
+      .table-wrap {
+        margin-top: 12px;
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid var(--border);
+        word-break: break-word;
+      }
+      th { color: #cbd5e1; }
+      .center {
+        min-height: 75vh;
+        display: grid;
+        place-items: center;
+      }
+      .hidden { display: none !important; }
+      @media (max-width: 900px) {
+        .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="authGate" class="center">
+      <section class="panel" style="max-width: 520px; width: 92vw;">
+        <h1>Admin Login Required</h1>
+        <p class="muted" style="margin-top: 8px;">Please log in from the dashboard before opening traffic analytics.</p>
+        <div class="actions" style="margin-top: 12px;">
+          <a class="btn-link" href="./index.html">Go to Admin Login</a>
+          <a class="btn-link" href="../index.html">Go to Site</a>
+        </div>
+      </section>
+    </main>
+
+    <main id="trafficApp" class="wrap hidden">
+      <section class="panel">
+        <div class="top">
+          <div>
+            <h1>Traffic Analytics</h1>
+            <div id="trafficStatus" class="muted">Loading traffic...</div>
+          </div>
+          <div class="actions">
+            <button id="refreshTrafficBtn" class="primary" type="button">Refresh</button>
+            <a class="btn-link" href="./index.html">Quotes Dashboard</a>
+            <a class="btn-link" href="../index.html">Go to Site</a>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">Total Visits</div>
+            <div class="value" id="kpiTotal">0</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Today Visits</div>
+            <div class="value" id="kpiToday">0</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Unique Pages</div>
+            <div class="value" id="kpiPages">0</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Top Page</div>
+            <div class="value" id="kpiTop">-</div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <h2 style="margin:0 0 8px;font-size:16px;">Visits by Day</h2>
+            <div id="trafficDayChart" class="chart"></div>
+          </section>
+          <section class="panel">
+            <h2 style="margin:0 0 8px;font-size:16px;">Top Pages</h2>
+            <div id="trafficPageChart" class="chart"></div>
+          </section>
+        </div>
+
+        <div class="table-wrap">
+          <table aria-label="Recent Traffic Events">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Page</th>
+                <th>Path</th>
+                <th>Referrer</th>
+              </tr>
+            </thead>
+            <tbody id="trafficTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/admin-traffic.js"></script>
+  </body>
+  </html>
+

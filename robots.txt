@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /output/
+Disallow: /server/
+
+Sitemap: https://floridasignsolution.com/sitemap.xml

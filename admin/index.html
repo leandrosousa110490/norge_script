@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
     <title>Norge Signs Admin</title>
     <link rel="icon" href="../favicons/favicon.ico" />
     <link rel="stylesheet" href="../css/styles.css" />
@@ -26,7 +27,7 @@
       }
       .card {
         width: 100%;
-        max-width: 960px;
+        max-width: 1200px;
         background: var(--admin-panel);
         border: 1px solid var(--admin-border);
         border-radius: 12px;
@@ -51,11 +52,27 @@
       input[type="text"], input[type="password"] {
         width: 100%;
         padding: 10px 12px;
-        background: #0b1220;
-        color: var(--admin-text);
-        border: 1px solid var(--admin-border);
+        background: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
+        caret-color: #0f172a;
+        border: 1px solid #94a3b8;
         border-radius: 8px;
         outline: none;
+        opacity: 1 !important;
+      }
+      input[type="text"]::placeholder, input[type="password"]::placeholder {
+        color: #64748b;
+      }
+      input[type="text"]:-webkit-autofill,
+      input[type="text"]:-webkit-autofill:hover,
+      input[type="text"]:-webkit-autofill:focus,
+      input[type="password"]:-webkit-autofill,
+      input[type="password"]:-webkit-autofill:hover,
+      input[type="password"]:-webkit-autofill:focus {
+        -webkit-text-fill-color: #0f172a !important;
+        -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+        box-shadow: 0 0 0 1000px #ffffff inset !important;
       }
       input[type="text"]:focus, input[type="password"]:focus {
         border-color: var(--admin-accent);
@@ -65,6 +82,7 @@
         margin-top: 18px;
         display: flex;
         gap: 10px;
+        flex-wrap: wrap;
       }
       button {
         padding: 10px 14px;
@@ -143,14 +161,137 @@
       }
       .cell-message { white-space: normal; word-break: break-word; }
       .table-wrap { width: 100%; overflow-x: auto; }
-      .cell-images { display: flex; gap: 6px; }
-      .cell-images { position: relative; width: 90px; height: 90px; display: inline-block; }
-      .cell-images img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
-      .cell-images[role="button"]:focus { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
-      .image-count-badge { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 9999px; padding: 2px 6px; font-size: 12px; }
       /* Link styling in table cells */
       tbody td a { color: #93c5fd; text-decoration: underline; }
       tbody td a:hover { text-decoration: none; }
+      .request-status-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .request-status-pill.new {
+        color: #083344;
+        background: #67e8f9;
+      }
+      .request-status-pill.viewed {
+        color: #d1d5db;
+        background: #1f2937;
+      }
+      .request-name-btn {
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        color: #93c5fd;
+        cursor: pointer;
+        text-decoration: underline;
+        font: inherit;
+        font-weight: 700;
+      }
+      .request-name-btn:hover { text-decoration: none; }
+      .contact-icons {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .contact-icon-link {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        border: 1px solid #1f2937;
+        background: #0f172a;
+        color: #67e8f9;
+        text-decoration: none;
+        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+      }
+      .contact-icon-link:hover {
+        transform: translateY(-1px);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14,165,233,.16);
+      }
+      .contact-icon-link:focus-visible {
+        outline: 2px solid #38bdf8;
+        outline-offset: 2px;
+      }
+      .contact-icon-link svg {
+        width: 16px;
+        height: 16px;
+      }
+      .request-row.is-viewed td { opacity: .78; }
+
+      .request-detail-section {
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 16px;
+        background: #0b1220;
+      }
+      .request-detail-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .request-detail-section h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .detail-item {
+        border: 1px solid var(--admin-border);
+        border-radius: 10px;
+        padding: 12px;
+        background: #111827;
+      }
+      .detail-item label {
+        margin: 0 0 6px;
+        color: #9ca3af;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .detail-item p {
+        margin: 0;
+        line-height: 1.45;
+      }
+      .detail-message {
+        margin-bottom: 12px;
+      }
+      .detail-images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 10px;
+      }
+      .detail-image-btn {
+        border: 1px solid var(--admin-border);
+        background: #0f172a;
+        border-radius: 10px;
+        padding: 0;
+        cursor: zoom-in;
+      }
+      .detail-image-btn img {
+        width: 100%;
+        height: 96px;
+        object-fit: cover;
+        border-radius: 9px;
+        display: block;
+      }
+      .detail-actions {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+      }
 
       /* Admin image viewer (lightbox) */
       .image-viewer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 3000; }
@@ -168,9 +309,8 @@
         h1 { font-size: 20px; }
         table { font-size: 13px; }
         thead th, tbody td { padding: 8px; }
-        /* Hide Email and Phone on small screens to prioritize Message */
-        thead th:nth-child(2), thead th:nth-child(3),
-        tbody td:nth-child(2), tbody td:nth-child(3) { display: none; }
+        .detail-grid { grid-template-columns: 1fr; }
+        .request-detail-head { flex-direction: column; align-items: flex-start; }
       }
       @media (max-width: 480px) {
         table { font-size: 12px; }
@@ -189,8 +329,8 @@
       <section id="loginSection" aria-label="Admin Login">
         <h1>Admin Login</h1>
         <form id="adminLoginForm">
-          <label for="adminCredential">Email</label>
-          <input id="adminCredential" name="credential" type="text" autocomplete="off" required />
+          <label for="adminCredential">Username</label>
+          <input id="adminCredential" name="credential" type="text" autocomplete="username" required />
 
           <label for="adminPassword">Password</label>
           <input id="adminPassword" name="password" type="password" required />
@@ -204,38 +344,76 @@
       </section>
 
       <section id="dashboardSection" aria-label="Admin Dashboard" hidden>
-        <div class="success" id="loginSuccess">Authenticated as NORGE.</div>
+        <div class="success" id="loginSuccess">Authenticated.</div>
         <h1>Admin Dashboard</h1>
         <p class="muted">View recent quote requests submitted by users.</p>
         <div class="actions">
           <button id="refreshQuotesBtn">Refresh</button>
+          <a href="./traffic.html" style="text-decoration:none"><button class="secondary" type="button">Traffic</button></a>
           <button id="adminLogoutBtn" class="secondary">Logout</button>
           <a href="../index.html" style="text-decoration:none"><button class="secondary">Go to Site</button></a>
         </div>
         <div id="quotesStatus" class="muted" style="margin-top:8px"></div>
         <div class="divider"></div>
 
-        <!-- Requests per month chart -->
-        <div id="quotesChart" style="width:100%;height:340px"></div>
-        <div class="divider"></div>
+        <div id="requestListSection">
+          <!-- Requests per month chart -->
+          <div id="quotesChart" style="width:100%;height:340px"></div>
+          <div class="divider"></div>
 
-        <div class="table-wrap">
-          <table aria-label="Quote Requests">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Message</th>
-                <th>Images</th>
-                <th>Timestamp</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="quotesTableBody"></tbody>
-          </table>
+          <div class="table-wrap">
+            <table aria-label="Quote Requests">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Name</th>
+                  <th>Contact</th>
+                  <th>Received</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="quotesTableBody"></tbody>
+            </table>
+          </div>
+          <p id="quotesEmpty" class="muted" style="margin-top:8px">No requests found.</p>
         </div>
-        <p id="quotesEmpty" class="muted" style="margin-top:8px">No requests found.</p>
+
+        <section id="requestDetailSection" class="request-detail-section" hidden>
+          <div class="request-detail-head">
+            <button id="requestDetailBackBtn" class="secondary" type="button">Back to Requests</button>
+            <span id="requestDetailViewedBadge" class="request-status-pill viewed">Viewed</span>
+          </div>
+          <h2 id="requestDetailTitle">Request Details</h2>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Name</label>
+              <p id="detailName">-</p>
+            </div>
+            <div class="detail-item">
+              <label>Received</label>
+              <p id="detailTimestamp">-</p>
+            </div>
+            <div class="detail-item">
+              <label>Email</label>
+              <p id="detailEmail">-</p>
+            </div>
+            <div class="detail-item">
+              <label>Phone</label>
+              <p id="detailPhone">-</p>
+            </div>
+          </div>
+          <div class="detail-item detail-message">
+            <label>Project Details</label>
+            <p id="detailMessage">-</p>
+          </div>
+          <div class="detail-item">
+            <label>Attached Images</label>
+            <div id="detailImages" class="detail-images-grid"></div>
+          </div>
+          <div class="detail-actions">
+            <button id="detailDeleteBtn" type="button" class="btn-danger">Delete Request</button>
+          </div>
+        </section>
       </section>
     </main>
 
