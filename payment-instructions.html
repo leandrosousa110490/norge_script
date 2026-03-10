@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment Instructions | Florida Sign Solution</title>
+    <meta name="description" content="Secure payment instructions for Florida Sign Solution customers." />
+    <style>
+      :root {
+        --bg: #0b1325;
+        --panel: #111c33;
+        --border: #2b3a57;
+        --text: #e5ecf8;
+        --muted: #9fb0cf;
+        --accent: #22d3ee;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top right, #0f2a4f, #0b1325 46%);
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 18px 34px rgba(2, 8, 23, 0.38);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.55rem;
+      }
+      .muted {
+        margin: 0;
+        color: var(--muted);
+      }
+      .grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 12px;
+      }
+      .block {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        background: rgba(6, 20, 42, 0.55);
+      }
+      .label {
+        color: #9bb0d7;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+      .value {
+        white-space: pre-wrap;
+        line-height: 1.45;
+      }
+      .actions {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button, a.btn {
+        border: 1px solid var(--border);
+        background: #0f1b33;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .btn.primary {
+        background: linear-gradient(120deg, #7dd3fc, #22d3ee);
+        color: #05243a;
+        border-color: transparent;
+      }
+      .qr-wrap {
+        display: grid;
+        place-items: center;
+        min-height: 240px;
+      }
+      .qr-wrap img {
+        width: min(270px, 100%);
+        height: auto;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: zoom-in;
+      }
+      .qr-lightbox {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 8, 23, 0.86);
+        z-index: 9999;
+        padding: 16px;
+      }
+      .qr-lightbox.show { display: flex; }
+      .qr-lightbox img {
+        max-width: min(96vw, 980px);
+        max-height: 90vh;
+        width: auto;
+        height: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: #fff;
+        box-shadow: 0 28px 52px rgba(0, 0, 0, 0.45);
+      }
+      .qr-lightbox-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: rgba(15, 27, 51, 0.6);
+        color: #fff;
+        font-size: 24px;
+        line-height: 1;
+      }
+      .hint {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      @media (max-width: 860px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <h1>Payment Instructions</h1>
+        <p class="muted">Use this page to complete payment and scan the QR code with Google Lens if needed.</p>
+
+        <div class="grid">
+          <section class="block">
+            <div class="label">Payment Source</div>
+            <div id="sourceValue" class="value">-</div>
+          </section>
+
+          <section class="block">
+            <div class="label">Find Me As</div>
+            <div id="lookupValue" class="value">-</div>
+          </section>
+
+          <section class="block">
+            <div class="label">Amount</div>
+            <div id="amountValue" class="value">-</div>
+          </section>
+
+          <section class="block">
+            <div class="label">Customer</div>
+            <div id="customerValue" class="value">-</div>
+          </section>
+        </div>
+
+        <section class="block" style="margin-top: 12px;">
+          <div class="label">Details</div>
+          <div id="detailsValue" class="value">-</div>
+        </section>
+
+        <section class="block" style="margin-top: 12px;">
+          <div class="label">QR Code</div>
+          <div class="qr-wrap">
+            <img id="qrImage" alt="Payment QR code" hidden />
+            <p id="qrMissing" class="muted">QR image was not provided in this shared link.</p>
+          </div>
+          <p id="qrNote" class="hint" hidden></p>
+          <div class="actions">
+            <a id="lensBtn" class="btn primary" target="_blank" rel="noopener">Open in Google Lens</a>
+            <button id="copyLookupBtn" type="button">Copy Find Me As</button>
+          </div>
+          <p class="hint">If Lens cannot open directly, use your phone camera or Google app and scan this QR image.</p>
+        </section>
+      </section>
+    </main>
+    <div id="qrLightbox" class="qr-lightbox" hidden>
+      <button id="qrLightboxClose" class="qr-lightbox-close" type="button" aria-label="Close full screen QR">&times;</button>
+      <img id="qrLightboxImage" alt="Full screen payment QR code" />
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script>
+      (async function () {
+        var params = new URLSearchParams(window.location.search || '');
+        var source = params.get('source') || 'Payment Source';
+        var type = params.get('type') || '';
+        var lookup = params.get('lookup') || '-';
+        var details = params.get('details') || '-';
+        var amount = params.get('amount') || '-';
+        var customer = params.get('customer') || '-';
+        var qr = params.get('qr') || '';
+        var qrKey = params.get('qr_key') || '';
+        var qrFallback = params.get('qr_fallback') || '';
+        var sourceId = params.get('source_id') || '';
+        var qrText = params.get('qr_text') || '';
+        var qrNoteText = params.get('qr_note') || '';
+
+        function setText(id, value) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.textContent = String(value || '-');
+        }
+
+        setText('sourceValue', type ? source + ' (' + type + ')' : source);
+        setText('lookupValue', lookup);
+        setText('detailsValue', details);
+        setText('amountValue', amount);
+        setText('customerValue', customer);
+
+        var qrImage = document.getElementById('qrImage');
+        var qrMissing = document.getElementById('qrMissing');
+        var lensBtn = document.getElementById('lensBtn');
+        var qrNote = document.getElementById('qrNote');
+        var copyLookupBtn = document.getElementById('copyLookupBtn');
+        var qrLightbox = document.getElementById('qrLightbox');
+        var qrLightboxImage = document.getElementById('qrLightboxImage');
+        var qrLightboxClose = document.getElementById('qrLightboxClose');
+
+        function openQrFullscreen() {
+          var src = String((qrImage && qrImage.getAttribute('src')) || '').trim();
+          if (!src || !qrLightbox || !qrLightboxImage) return;
+          qrLightboxImage.src = src;
+          qrLightbox.hidden = false;
+          qrLightbox.classList.add('show');
+          document.body.style.overflow = 'hidden';
+        }
+
+        function closeQrFullscreen() {
+          if (!qrLightbox) return;
+          qrLightbox.classList.remove('show');
+          qrLightbox.hidden = true;
+          document.body.style.overflow = '';
+        }
+
+        function loadScriptOnce(src) {
+          return new Promise(function (resolve, reject) {
+            if (document.querySelector('script[src="' + src + '"]')) return resolve();
+            var script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = function () { reject(new Error('Failed to load ' + src)); };
+            document.head.appendChild(script);
+          });
+        }
+
+        async function fetchQrFromSource(sourceDocId) {
+          if (!sourceDocId) return '';
+          if (!window.FIREBASE_CONFIG || !window.FIREBASE_CONFIG.apiKey || !window.FIREBASE_CONFIG.projectId) return '';
+          try {
+            await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+            await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js');
+            await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
+            if (!window.firebase) return '';
+            if (!window.firebase.apps.length) window.firebase.initializeApp(window.FIREBASE_CONFIG);
+            try {
+              await window.firebase.auth().signInAnonymously();
+            } catch (_) {}
+            var doc = await window.firebase.firestore().collection('adminPaymentSources').doc(String(sourceDocId)).get();
+            if (!doc.exists) return '';
+            var data = doc.data() || {};
+            var dataQr = String(data.qrImageData || '').trim();
+            var publicQr = String(data.qrPublicUrl || '').trim();
+            if (dataQr.indexOf('data:image') === 0) return dataQr;
+            if (/^https?:\/\//i.test(publicQr)) return publicQr;
+            return '';
+          } catch (e) {
+            console.warn('Unable to fetch payment source QR:', e);
+            return '';
+          }
+        }
+
+        if (!qr && qrKey) {
+          try {
+            var stored = localStorage.getItem('PAYMENT_QR_SHARE_V1:' + qrKey);
+            if (stored) {
+              var parsed = JSON.parse(stored);
+              if (parsed && typeof parsed.dataUrl === 'string' && parsed.dataUrl.indexOf('data:image') === 0) {
+                qr = parsed.dataUrl;
+                qrNoteText = qrNoteText || 'Showing the exact source QR image shared from this device.';
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (!qr && /^https?:\/\//i.test(qrFallback)) {
+          qr = qrFallback;
+          qrNoteText = qrNoteText || 'Showing public QR fallback for this payment source.';
+        }
+
+        var generatedQrUrl = '';
+        if (!qr && qrText) {
+          generatedQrUrl = 'https://quickchart.io/qr?size=320&text=' + encodeURIComponent(qrText);
+          qr = generatedQrUrl;
+          qrNoteText = qrNoteText || 'QR was generated from payment details for this request.';
+        }
+
+        function applyQrState(qrValue, noteText) {
+          var resolvedQr = String(qrValue || '').trim();
+          if (qrNote) {
+            if (noteText) {
+              qrNote.hidden = false;
+              qrNote.textContent = noteText;
+            } else {
+              qrNote.hidden = true;
+              qrNote.textContent = '';
+            }
+          }
+
+          var hasQr = /^https?:\/\//i.test(resolvedQr) || resolvedQr.indexOf('data:image') === 0;
+          if (hasQr) {
+            qrImage.hidden = false;
+            qrImage.src = resolvedQr;
+            qrMissing.hidden = true;
+          } else {
+            qrImage.hidden = true;
+            qrImage.removeAttribute('src');
+            qrMissing.hidden = false;
+          }
+
+          if (/^https?:\/\//i.test(resolvedQr)) {
+            lensBtn.href = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(resolvedQr);
+          } else {
+            lensBtn.href = 'https://lens.google.com/';
+          }
+        }
+
+        applyQrState(qr, qrNoteText);
+
+        if (sourceId) {
+          fetchQrFromSource(sourceId).then(function (fetchedQr) {
+            if (!fetchedQr) return;
+            qr = fetchedQr;
+            qrNoteText = 'Showing the exact QR configured for this payment source.';
+            applyQrState(qr, qrNoteText);
+          });
+        }
+
+        copyLookupBtn.addEventListener('click', async function () {
+          try {
+            await navigator.clipboard.writeText(String(lookup || ''));
+            copyLookupBtn.textContent = 'Copied';
+            setTimeout(function () { copyLookupBtn.textContent = 'Copy Find Me As'; }, 1200);
+          } catch (_) {}
+        });
+
+        qrImage.addEventListener('click', function () {
+          if (!qrImage.hidden) openQrFullscreen();
+        });
+
+        if (qrLightboxClose) {
+          qrLightboxClose.addEventListener('click', closeQrFullscreen);
+        }
+        if (qrLightbox) {
+          qrLightbox.addEventListener('click', function (event) {
+            if (event.target === qrLightbox) closeQrFullscreen();
+          });
+        }
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && qrLightbox && !qrLightbox.hidden) {
+            closeQrFullscreen();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

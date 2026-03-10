@@ -15,6 +15,8 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
     <title>Norge Signs Admin - Customers</title>
     <link rel="icon" href="../favicons/favicon.ico" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../css/admin-portal.css" />
     <style>
       :root {
         --bg: #0f172a;
@@ -44,7 +46,7 @@
       .wrap {
         max-width: 1320px;
         margin: 0 auto;
-        padding: 24px;
+        padding: 0 24px 24px;
       }
       .panel {
         background: var(--panel);
@@ -105,9 +107,7 @@
         color: #fff;
         border-color: #7f1d1d;
       }
-      button.ghost {
-        background: transparent;
-      }
+      button.ghost { background: transparent; }
       input, select, textarea {
         width: 100%;
         border: 1px solid #334155;
@@ -125,12 +125,6 @@
       textarea {
         min-height: 92px;
         resize: vertical;
-      }
-      .grid-2 {
-        margin-top: 14px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
       }
       .field-grid {
         display: grid;
@@ -162,9 +156,17 @@
         border-bottom: 1px solid var(--border);
         vertical-align: top;
       }
-      th {
-        color: #cbd5e1;
+      th { color: #cbd5e1; }
+      .name-btn {
+        background: transparent;
+        border: none;
+        color: #93c5fd;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        text-decoration: underline;
       }
+      .name-btn:hover { text-decoration: none; }
       .pill {
         display: inline-flex;
         align-items: center;
@@ -181,69 +183,10 @@
         color: #7f1d1d;
         background: #fecaca;
       }
-      .row-actions {
-        display: flex;
-        gap: 8px;
-      }
-      .row-actions button {
-        padding: 6px 8px;
-        font-size: 12px;
-      }
-      .name-btn {
-        background: transparent;
-        border: none;
-        color: #93c5fd;
-        padding: 0;
-        margin: 0;
-        cursor: pointer;
-        text-decoration: underline;
-      }
-      .name-btn:hover { text-decoration: none; }
-      .source-list {
-        margin-top: 10px;
+      .detail-layout {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 10px;
-      }
-      .source-item {
-        border: 1px solid var(--border);
-        background: #0a1325;
-        border-radius: 10px;
-        padding: 10px;
-      }
-      .source-item.active {
-        border-color: #22d3ee;
-        box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
-      }
-      .source-item h3 {
-        margin: 0;
-        font-size: 14px;
-      }
-      .source-item p {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 12px;
-        white-space: pre-wrap;
-      }
-      .source-item .item-actions {
-        margin-top: 10px;
-        display: flex;
-        gap: 7px;
-        flex-wrap: wrap;
-      }
-      .source-item .item-actions button {
-        padding: 6px 8px;
-        font-size: 12px;
-      }
-      .qr-preview {
-        margin-top: 8px;
-      }
-      .qr-preview img {
-        width: 120px;
-        height: 120px;
-        object-fit: cover;
-        border-radius: 8px;
-        border: 1px solid var(--border);
+        grid-template-columns: 1.25fr 1fr;
+        gap: 12px;
       }
       .helper {
         margin-top: 8px;
@@ -255,18 +198,105 @@
         font-size: 12px;
         white-space: pre-wrap;
       }
+      .trigger-btn {
+        padding: 6px 9px;
+        font-size: 12px;
+      }
+      .trigger-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 4600;
+        display: grid;
+        place-items: center;
+      }
+      .trigger-modal.hidden {
+        display: none !important;
+      }
+      .trigger-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 8, 23, 0.78);
+        backdrop-filter: blur(3px);
+      }
+      .trigger-modal-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(560px, calc(100vw - 24px));
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-radius: 12px;
+        background: linear-gradient(150deg, #111827, #0a1427);
+        box-shadow: 0 20px 44px rgba(0, 0, 0, 0.45);
+        padding: 14px;
+      }
+      .trigger-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .trigger-close {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        cursor: pointer;
+      }
       .ok { color: var(--success); }
       .error { color: #fca5a5; }
+      .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 8, 23, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 5200;
+        padding: 16px;
+      }
+      .confirm-overlay.show { display: flex; }
+      .confirm-dialog {
+        width: min(460px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 24px 44px rgba(0, 0, 0, 0.44);
+      }
+      .confirm-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .confirm-actions .secondary {
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .confirm-actions .btn-danger {
+        border: 1px solid #7f1d1d;
+        background: var(--danger);
+        color: #fff;
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-weight: 700;
+      }
       @media (max-width: 1060px) {
-        .grid-2 { grid-template-columns: 1fr; }
+        .detail-layout { grid-template-columns: 1fr; }
       }
       @media (max-width: 700px) {
         .field-grid { grid-template-columns: 1fr; }
-        .row-actions { flex-direction: column; }
+        .wrap { padding: 0 12px 16px; }
       }
     </style>
   </head>
-  <body>
+  <body class="admin-portal">
     <main id="authGate" class="center">
       <section class="panel" style="max-width: 560px; width: 92vw;">
         <h1>Admin Login Required</h1>
@@ -279,193 +309,190 @@
     </main>
 
     <main id="customersApp" class="wrap hidden">
+      <header class="admin-toolbar">
+        <div class="admin-toolbar-inner">
+          <a class="admin-brand" href="./index.html" aria-label="Admin Dashboard Home">
+            <span class="admin-brand-icon"><i class="bi bi-stars"></i></span>
+            <span>Admin Control</span>
+          </a>
+          <nav class="admin-nav" aria-label="Admin Pages">
+            <a class="admin-nav-link" href="./index.html"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
+            <a class="admin-nav-link" href="./customers.html"><i class="bi bi-people-fill"></i><span>Customers</span></a>
+            <a class="admin-nav-link" href="./traffic.html"><i class="bi bi-graph-up-arrow"></i><span>Traffic</span></a>
+            <a class="admin-nav-link" href="./settings.html"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+          </nav>
+          <div class="admin-toolbar-actions">
+            <span class="admin-toolbar-user" id="adminToolbarUser">Admin</span>
+            <button class="admin-toolbar-btn danger" type="button" data-admin-logout>
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
       <section class="panel">
         <div class="topbar">
           <div>
-            <h1>Customer CRM + Payment Requests</h1>
+            <h1>Customer CRM</h1>
             <div id="customersStatus" class="muted">Loading customer workspace...</div>
           </div>
           <div class="actions">
             <button id="refreshCustomersBtn" class="primary" type="button">Refresh</button>
-            <a class="btn-link" href="./index.html">Quotes Dashboard</a>
-            <a class="btn-link" href="./traffic.html">Traffic</a>
+            <button id="addCustomerBtn" type="button">Add New Customer</button>
             <a class="btn-link" href="../index.html">Go to Site</a>
           </div>
         </div>
 
-        <div class="grid-2">
-          <section class="subpanel">
-            <h2>Customer Information</h2>
-            <form id="customerForm">
-              <input id="customerId" type="hidden" />
-              <div class="field-grid">
-                <div class="field">
-                  <label for="customerName">Customer Name</label>
-                  <input id="customerName" type="text" required />
-                </div>
-                <div class="field">
-                  <label for="customerPhone">Phone Number</label>
-                  <input id="customerPhone" type="text" />
-                </div>
-                <div class="field">
-                  <label for="customerEmail">Email Address</label>
-                  <input id="customerEmail" type="text" />
-                </div>
-                <div class="field">
-                  <label for="customerQuotedPrice">Quoted Price (USD)</label>
-                  <input id="customerQuotedPrice" type="number" min="0" step="0.01" />
-                </div>
-                <div class="field">
-                  <label for="customerPaidStatus">Payment Status</label>
-                  <select id="customerPaidStatus">
-                    <option value="not_paid">Not Paid</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
-              </div>
-              <div class="field" style="margin-top: 10px;">
-                <label for="customerNotes">Notes</label>
-                <textarea id="customerNotes" placeholder="Project scope, due dates, install location, permit notes..."></textarea>
-              </div>
-              <div class="actions">
-                <button id="saveCustomerBtn" class="primary" type="submit">Save Customer</button>
-                <button id="clearCustomerBtn" class="ghost" type="button">New Customer</button>
-                <button id="deleteCustomerBtn" class="danger" type="button">Delete Customer</button>
-              </div>
-            </form>
-          </section>
+        <section id="customerListSection" class="subpanel" style="margin-top: 12px;">
+          <h2>Customers</h2>
+          <div class="table-wrap">
+            <table aria-label="Customer list">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Quote</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customersTableBody"></tbody>
+            </table>
+          </div>
+          <p id="customersEmpty" class="muted">No customers yet. Click "Add New Customer" to create one.</p>
+        </section>
 
-          <section class="subpanel">
-            <h2>Send Quote / Payment Request</h2>
-            <div class="field-grid">
+        <section id="triggerModal" class="trigger-modal hidden" aria-hidden="true">
+          <div class="trigger-modal-backdrop" data-trigger-close></div>
+          <div class="trigger-modal-dialog">
+            <div class="trigger-modal-head">
+              <div>
+                <h2 style="margin:0;">Run Trigger</h2>
+                <div class="muted" id="triggerModalCustomer">Select trigger options for this customer.</div>
+              </div>
+              <button type="button" class="trigger-close" aria-label="Close trigger modal" data-trigger-close>&times;</button>
+            </div>
+            <input id="triggerCustomerId" type="hidden" />
+            <div class="field" style="margin-top: 10px;">
+              <label for="triggerActionType">Trigger</label>
+              <select id="triggerActionType">
+                <option value="quote_email">Send Quote Email</option>
+                <option value="quote_sms">Send Quote Message</option>
+                <option value="payment_email">Send Payment Email</option>
+                <option value="payment_sms">Send Payment Message</option>
+              </select>
+            </div>
+            <div class="field" id="triggerPaymentSourceRow" style="margin-top: 10px;">
+              <label for="triggerPaymentSource">Payment Source</label>
+              <select id="triggerPaymentSource"></select>
+            </div>
+            <div id="triggerQrPreview" class="helper hidden">
+              <img id="triggerQrImage" alt="Selected payment source QR code" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #334155;display:block;" />
+            </div>
+            <div class="field" id="triggerEmailServiceRow" style="margin-top: 10px;">
+              <label for="triggerEmailService">Email Service</label>
+              <select id="triggerEmailService">
+                <option value="default">Default Email App</option>
+                <option value="gmail">Gmail (Web)</option>
+                <option value="outlook">Outlook (Web)</option>
+                <option value="yahoo">Yahoo Mail (Web)</option>
+              </select>
+            </div>
+            <div class="actions" style="margin-top: 12px;">
+              <button id="triggerRunBtn" class="primary" type="button">Run Trigger</button>
+              <button type="button" class="ghost" data-trigger-close>Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="customerDetailSection" class="subpanel hidden" style="margin-top: 12px;">
+          <div class="topbar">
+            <div>
+              <h2 id="customerDetailTitle">Customer Details</h2>
+              <div class="muted">Edit information and use action tools for this customer.</div>
+            </div>
+            <div class="actions">
+              <button id="backToCustomersBtn" class="ghost" type="button">Back to Customers</button>
+            </div>
+          </div>
+
+          <div class="detail-layout">
+            <section class="subpanel">
+              <form id="customerDetailForm">
+                <input id="customerId" type="hidden" />
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="customerName">Customer Name</label>
+                    <input id="customerName" type="text" required />
+                  </div>
+                  <div class="field">
+                    <label for="customerQuotedPrice">Quoted Price (USD)</label>
+                    <input id="customerQuotedPrice" type="number" min="0" step="0.01" />
+                  </div>
+                  <div class="field">
+                    <label for="customerEmail">Email Address</label>
+                    <input id="customerEmail" type="text" />
+                  </div>
+                  <div class="field">
+                    <label for="customerPhone">Phone Number</label>
+                    <input id="customerPhone" type="text" />
+                  </div>
+                  <div class="field">
+                    <label for="customerPaidStatus">Payment Status</label>
+                    <select id="customerPaidStatus">
+                      <option value="not_paid">Not Paid</option>
+                      <option value="paid">Paid</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="customerNotes">Notes</label>
+                  <textarea id="customerNotes" placeholder="Project scope, due dates, install location, permit notes..."></textarea>
+                </div>
+                <div class="actions" style="margin-top: 10px;">
+                  <button id="saveCustomerBtn" class="primary" type="submit">Save Customer</button>
+                  <button id="deleteCustomerBtn" class="danger" type="button">Delete Customer</button>
+                </div>
+              </form>
+            </section>
+
+            <section id="customerActionsPanel" class="subpanel hidden">
+              <h2>Customer Actions</h2>
+              <div id="customerActionsNotice" class="helper hidden" style="margin-top: 0;">
+Save this customer first to unlock payment source and trigger actions.
+              </div>
               <div class="field">
-                <label for="selectedPaymentSource">Payment Source for Request</label>
+                <label for="selectedPaymentSource">Payment Source for Requests</label>
                 <select id="selectedPaymentSource"></select>
               </div>
-              <div class="field">
+              <div class="field" style="margin-top: 10px;">
                 <label for="paymentSourcePreview">Selected Source Details</label>
                 <textarea id="paymentSourcePreview" readonly></textarea>
               </div>
-            </div>
-            <div class="qr-preview" id="paymentSourceQrPreview" hidden>
-              <img id="paymentSourceQrImage" alt="Payment source QR code" />
-            </div>
-            <div class="actions" style="margin-top: 10px;">
-              <button id="sendQuoteEmailBtn" type="button">Send Quote Email</button>
-              <button id="sendQuoteSmsBtn" type="button">Send Quote SMS</button>
-              <button id="sendPaymentEmailBtn" type="button">Send Payment Email</button>
-              <button id="sendPaymentSmsBtn" type="button">Send Payment SMS</button>
-            </div>
-            <p class="muted" style="margin-top: 8px;">
-              Sends through your default email/SMS app with prefilled content. Select a customer first.
-            </p>
-
-            <div class="field-grid" style="margin-top: 10px;">
-              <div class="field">
-                <label for="quoteEmailSubject">Quote Email Subject Template</label>
-                <input id="quoteEmailSubject" type="text" />
+              <div id="paymentSourceQrPreview" class="helper hidden">
+                <img id="paymentSourceQrImage" alt="Payment source QR code" style="max-width:120px;max-height:120px;border-radius:8px;border:1px solid #334155;display:block;" />
               </div>
-              <div class="field">
-                <label for="paymentEmailSubject">Payment Email Subject Template</label>
-                <input id="paymentEmailSubject" type="text" />
+              <div class="actions" style="margin-top: 10px;">
+                <button id="sendQuoteEmailBtn" type="button">Send Quote Email</button>
+                <button id="sendQuoteSmsBtn" type="button">Send Quote SMS</button>
+                <button id="sendPaymentEmailBtn" type="button">Send Payment Email</button>
+                <button id="sendPaymentSmsBtn" type="button">Send Payment SMS</button>
               </div>
-            </div>
-            <div class="field" style="margin-top: 10px;">
-              <label for="quoteEmailBody">Quote Email Body Template</label>
-              <textarea id="quoteEmailBody"></textarea>
-            </div>
-            <div class="field" style="margin-top: 10px;">
-              <label for="quoteSmsBody">Quote SMS Template</label>
-              <textarea id="quoteSmsBody"></textarea>
-            </div>
-            <div class="field" style="margin-top: 10px;">
-              <label for="paymentEmailBody">Payment Email Body Template (fallback)</label>
-              <textarea id="paymentEmailBody"></textarea>
-            </div>
-            <div class="field" style="margin-top: 10px;">
-              <label for="paymentSmsBody">Payment SMS Template (fallback)</label>
-              <textarea id="paymentSmsBody"></textarea>
-            </div>
-            <div class="actions" style="margin-top: 10px;">
-              <button id="saveTemplatesBtn" class="primary" type="button">Save Templates</button>
-            </div>
-            <div class="helper">
-Available template tokens:
-{{name}} {{email}} {{phone}} {{quotedPrice}} {{paymentStatus}} {{notes}} {{paymentMethodName}} {{paymentMethodType}} {{paymentDetails}} {{today}}
-            </div>
-          </section>
-        </div>
-
-        <div class="grid-2" style="margin-top: 12px;">
-          <section class="subpanel">
-            <h2>Payment Sources (Venmo, Zelle, Other)</h2>
-            <form id="paymentSourceForm">
-              <input id="paymentSourceId" type="hidden" />
-              <input id="paymentSourceQrData" type="hidden" />
-              <div class="field-grid">
-                <div class="field">
-                  <label for="paymentSourceName">Source Name</label>
-                  <input id="paymentSourceName" type="text" placeholder="Venmo / Zelle / Cash App / Other" />
-                </div>
-                <div class="field">
-                  <label for="paymentSourceType">Source Type</label>
-                  <select id="paymentSourceType">
-                    <option value="venmo">Venmo</option>
-                    <option value="zelle">Zelle</option>
-                    <option value="cashapp">Cash App</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
+              <div class="helper">
+Actions open your default Email/SMS app with prefilled message content.
+Manage global payment sources and templates in Settings.
               </div>
-              <div class="field" style="margin-top: 10px;">
-                <label for="paymentSourceDetails">Payment Details</label>
-                <textarea id="paymentSourceDetails" placeholder="@handle, phone, email, instructions..."></textarea>
-              </div>
-              <div class="field" style="margin-top: 10px;">
-                <label for="paymentSourceQrFile">QR Code Image</label>
-                <input id="paymentSourceQrFile" type="file" accept="image/*" />
-              </div>
-              <div class="field" style="margin-top: 10px;">
-                <label for="paymentSourceEmailTemplate">Payment Email Template Override (optional)</label>
-                <textarea id="paymentSourceEmailTemplate" placeholder="If set, this overrides fallback payment email template."></textarea>
-              </div>
-              <div class="field" style="margin-top: 10px;">
-                <label for="paymentSourceSmsTemplate">Payment SMS Template Override (optional)</label>
-                <textarea id="paymentSourceSmsTemplate" placeholder="If set, this overrides fallback payment SMS template."></textarea>
-              </div>
-              <div class="actions">
-                <button id="savePaymentSourceBtn" class="primary" type="submit">Save Payment Source</button>
-                <button id="clearPaymentSourceBtn" class="ghost" type="button">New Source</button>
-                <button id="deletePaymentSourceBtn" class="danger" type="button">Delete Source</button>
-              </div>
-            </form>
-            <div id="paymentSourcesList" class="source-list"></div>
-          </section>
-
-          <section class="subpanel">
-            <h2>Customers</h2>
-            <div class="table-wrap">
-              <table aria-label="Customer list">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Contact</th>
-                    <th>Quote</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="customersTableBody"></tbody>
-              </table>
-            </div>
-            <p id="customersEmpty" class="muted">No customers yet. Use the form to create one.</p>
-          </section>
-        </div>
+            </section>
+          </div>
+        </section>
       </section>
     </main>
 
     <script src="../js/firebase-config.js"></script>
+    <script src="../js/admin-toolbar.js"></script>
     <script src="../js/admin-customers.js"></script>
   </body>
-  </html>
+</html>

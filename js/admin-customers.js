@@ -2,9 +2,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const authGate = document.getElementById('authGate');
   const customersApp = document.getElementById('customersApp');
   const statusEl = document.getElementById('customersStatus');
-  const refreshBtn = document.getElementById('refreshCustomersBtn');
 
-  const customerForm = document.getElementById('customerForm');
+  const refreshBtn = document.getElementById('refreshCustomersBtn');
+  const addCustomerBtn = document.getElementById('addCustomerBtn');
+  const backToCustomersBtn = document.getElementById('backToCustomersBtn');
+
+  const customerListSection = document.getElementById('customerListSection');
+  const customerDetailSection = document.getElementById('customerDetailSection');
+  const customerDetailTitle = document.getElementById('customerDetailTitle');
+  const customerActionsPanel = document.getElementById('customerActionsPanel');
+  const customerActionsNotice = document.getElementById('customerActionsNotice');
+  const customersTableBody = document.getElementById('customersTableBody');
+  const customersEmpty = document.getElementById('customersEmpty');
+
+  const customerForm = document.getElementById('customerDetailForm');
   const customerIdInput = document.getElementById('customerId');
   const customerNameInput = document.getElementById('customerName');
   const customerPhoneInput = document.getElementById('customerPhone');
@@ -12,42 +23,29 @@ document.addEventListener('DOMContentLoaded', function () {
   const customerQuotedPriceInput = document.getElementById('customerQuotedPrice');
   const customerPaidStatusInput = document.getElementById('customerPaidStatus');
   const customerNotesInput = document.getElementById('customerNotes');
-  const clearCustomerBtn = document.getElementById('clearCustomerBtn');
   const deleteCustomerBtn = document.getElementById('deleteCustomerBtn');
 
   const selectedPaymentSourceInput = document.getElementById('selectedPaymentSource');
   const paymentSourcePreview = document.getElementById('paymentSourcePreview');
   const paymentSourceQrPreview = document.getElementById('paymentSourceQrPreview');
   const paymentSourceQrImage = document.getElementById('paymentSourceQrImage');
-
-  const quoteEmailSubjectInput = document.getElementById('quoteEmailSubject');
-  const quoteEmailBodyInput = document.getElementById('quoteEmailBody');
-  const quoteSmsBodyInput = document.getElementById('quoteSmsBody');
-  const paymentEmailSubjectInput = document.getElementById('paymentEmailSubject');
-  const paymentEmailBodyInput = document.getElementById('paymentEmailBody');
-  const paymentSmsBodyInput = document.getElementById('paymentSmsBody');
-  const saveTemplatesBtn = document.getElementById('saveTemplatesBtn');
+  const triggerModal = document.getElementById('triggerModal');
+  const triggerCustomerIdInput = document.getElementById('triggerCustomerId');
+  const triggerModalCustomer = document.getElementById('triggerModalCustomer');
+  const triggerActionTypeInput = document.getElementById('triggerActionType');
+  const triggerPaymentSourceRow = document.getElementById('triggerPaymentSourceRow');
+  const triggerPaymentSourceInput = document.getElementById('triggerPaymentSource');
+  const triggerQrPreview = document.getElementById('triggerQrPreview');
+  const triggerQrImage = document.getElementById('triggerQrImage');
+  const triggerEmailServiceRow = document.getElementById('triggerEmailServiceRow');
+  const triggerEmailServiceInput = document.getElementById('triggerEmailService');
+  const triggerRunBtn = document.getElementById('triggerRunBtn');
+  const triggerCloseNodes = document.querySelectorAll('[data-trigger-close]');
 
   const sendQuoteEmailBtn = document.getElementById('sendQuoteEmailBtn');
   const sendQuoteSmsBtn = document.getElementById('sendQuoteSmsBtn');
   const sendPaymentEmailBtn = document.getElementById('sendPaymentEmailBtn');
   const sendPaymentSmsBtn = document.getElementById('sendPaymentSmsBtn');
-
-  const paymentSourceForm = document.getElementById('paymentSourceForm');
-  const paymentSourceIdInput = document.getElementById('paymentSourceId');
-  const paymentSourceQrDataInput = document.getElementById('paymentSourceQrData');
-  const paymentSourceNameInput = document.getElementById('paymentSourceName');
-  const paymentSourceTypeInput = document.getElementById('paymentSourceType');
-  const paymentSourceDetailsInput = document.getElementById('paymentSourceDetails');
-  const paymentSourceQrFileInput = document.getElementById('paymentSourceQrFile');
-  const paymentSourceEmailTemplateInput = document.getElementById('paymentSourceEmailTemplate');
-  const paymentSourceSmsTemplateInput = document.getElementById('paymentSourceSmsTemplate');
-  const clearPaymentSourceBtn = document.getElementById('clearPaymentSourceBtn');
-  const deletePaymentSourceBtn = document.getElementById('deletePaymentSourceBtn');
-  const paymentSourcesList = document.getElementById('paymentSourcesList');
-
-  const customersTableBody = document.getElementById('customersTableBody');
-  const customersEmpty = document.getElementById('customersEmpty');
 
   const LOCAL_CUSTOMERS_KEY = 'ADMIN_CUSTOMERS_LOCAL_V1';
   const LOCAL_PAYMENT_SOURCES_KEY = 'ADMIN_PAYMENT_SOURCES_LOCAL_V1';
@@ -65,36 +63,40 @@ document.addEventListener('DOMContentLoaded', function () {
       'Project notes:',
       '{{notes}}',
       '',
-      'Please reply to this email if you have any questions.',
-      '',
       '- Florida Sign Solution'
     ].join('\n'),
-    quoteSmsBody: 'Hi {{name}}, your quote from Florida Sign Solution is {{quotedPrice}}. Reply here for details.',
+    quoteSmsBody: 'Hi {{name}}, your quote from Florida Sign Solution is {{quotedPrice}}.',
     paymentEmailSubject: 'Payment request for {{name}} - Florida Sign Solution',
     paymentEmailBody: [
       'Hi {{name}},',
       '',
       'This is your payment request for {{quotedPrice}}.',
       'Payment method: {{paymentMethodName}} ({{paymentMethodType}})',
+      'Find Me As: {{paymentLookupValue}}',
       'Payment details: {{paymentDetails}}',
-      '',
-      'Please send confirmation once payment is completed.',
+      'QR Code: {{paymentQrInfo}}',
+      'Payment Page: {{paymentPageUrl}}',
       '',
       '- Florida Sign Solution'
     ].join('\n'),
-    paymentSmsBody: 'Hi {{name}}, please send payment of {{quotedPrice}} via {{paymentMethodName}} ({{paymentDetails}}). Thank you.'
+    paymentSmsBody: 'Hi {{name}}, please send payment of {{quotedPrice}} via {{paymentMethodName}}. Find Me As: {{paymentLookupValue}}. QR: {{paymentQrInfo}}. Payment Page: {{paymentPageUrl}}'
   };
 
-  let appStarted = false;
   let customers = [];
   let paymentSources = [];
   let templates = Object.assign({}, TEMPLATE_DEFAULTS);
   let selectedCustomerId = '';
   let selectedPaymentSourceId = '';
+  let selectedTriggerCustomerId = '';
+  let appStarted = false;
   let activeDataSource = 'none';
   let dbClientPromise = null;
   let authWarmupPromise = null;
   let authWarmupErrorCode = '';
+  let customersReadDenied = false;
+  let customersWriteDenied = false;
+  let paymentSourcesReadDenied = false;
+  let templatesReadDenied = false;
 
   function setStatus(message, isOk, isError) {
     statusEl.textContent = message;
@@ -115,32 +117,14 @@ document.addEventListener('DOMContentLoaded', function () {
     customersApp.classList.remove('hidden');
   }
 
-  function normalizeTimestamp(ts) {
-    try {
-      if (!ts) return null;
-      if (typeof ts === 'object') {
-        if (typeof ts.toDate === 'function') return ts.toDate();
-        if (typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
-      }
-      if (typeof ts === 'number') return new Date(ts < 1e12 ? ts * 1000 : ts);
-      const d = new Date(String(ts));
-      if (!isNaN(d.getTime())) return d;
-      return null;
-    } catch (_) {
-      return null;
-    }
+  function showCustomerList() {
+    customerDetailSection.classList.add('hidden');
+    customerListSection.classList.remove('hidden');
   }
 
-  function formatDateTime(ts) {
-    const d = normalizeTimestamp(ts);
-    if (!d) return '-';
-    return d.toLocaleString();
-  }
-
-  function formatCurrency(value) {
-    const num = Number(value);
-    if (!isFinite(num)) return '$0.00';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  function showCustomerDetail() {
+    customerListSection.classList.add('hidden');
+    customerDetailSection.classList.remove('hidden');
   }
 
   function isValidFirebaseConfig(cfg) {
@@ -232,9 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function toSortedRows(rows) {
     return (rows || []).slice().sort(function (a, b) {
-      const av = Number(a.updatedAtMs || 0);
-      const bv = Number(b.updatedAtMs || 0);
-      return bv - av;
+      return Number(b.updatedAtMs || 0) - Number(a.updatedAtMs || 0);
     });
   }
 
@@ -242,14 +224,54 @@ document.addEventListener('DOMContentLoaded', function () {
     return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   }
 
+  function getErrorCode(error) {
+    return String((error && (error.code || error.name)) || '').toLowerCase();
+  }
+
+  function isPermissionDenied(error) {
+    const code = getErrorCode(error);
+    return code.includes('permission-denied') || code.includes('unauthenticated');
+  }
+
+  function normalizeTimestamp(ts) {
+    try {
+      if (!ts) return null;
+      if (typeof ts === 'object') {
+        if (typeof ts.toDate === 'function') return ts.toDate();
+        if (typeof ts.seconds === 'number') return new Date(ts.seconds * 1000);
+      }
+      if (typeof ts === 'number') return new Date(ts < 1e12 ? ts * 1000 : ts);
+      const d = new Date(String(ts));
+      if (!isNaN(d.getTime())) return d;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function formatDateTime(ts) {
+    const d = normalizeTimestamp(ts);
+    return d ? d.toLocaleString() : '-';
+  }
+
+  function formatCurrency(value) {
+    const num = Number(value);
+    if (!isFinite(num)) return '$0.00';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  }
+
   async function fetchCustomers() {
     const db = await getDb();
-    if (db) {
+    if (db && !customersReadDenied) {
       try {
-        const snap = await db.collection('adminCustomers').orderBy('updatedAtMs', 'desc').limit(600).get();
+        const snap = await db.collection('adminCustomers').orderBy('updatedAtMs', 'desc').limit(800).get();
         return { source: 'firestore', rows: snap.docs.map(function (doc) { return Object.assign({ id: doc.id }, doc.data()); }) };
       } catch (e) {
-        console.warn('Customers fetch failed (firestore):', e);
+        if (isPermissionDenied(e)) {
+          customersReadDenied = true;
+        } else {
+          console.warn('Customers fetch failed (firestore):', e);
+        }
       }
     }
     return { source: 'local', rows: toSortedRows(readLocalJSON(LOCAL_CUSTOMERS_KEY, [])) };
@@ -269,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
       updatedAtMs: nowMs
     };
     const db = await getDb();
-    if (db) {
+    if (db && !customersWriteDenied) {
       try {
         if (customer.id) {
           await db.collection('adminCustomers').doc(customer.id).set(payload, { merge: true });
@@ -280,17 +302,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const ref = await db.collection('adminCustomers').add(payload);
         return ref.id;
       } catch (e) {
-        console.warn('Customers save failed (firestore):', e);
+        if (isPermissionDenied(e)) {
+          customersWriteDenied = true;
+        } else {
+          console.warn('Customers save failed (firestore):', e);
+        }
       }
     }
+
     const rows = readLocalJSON(LOCAL_CUSTOMERS_KEY, []);
     if (customer.id) {
       const idx = rows.findIndex(function (x) { return String(x.id) === String(customer.id); });
-      if (idx >= 0) {
-        rows[idx] = Object.assign({}, rows[idx], payload);
-      } else {
-        rows.push(Object.assign({ id: customer.id, createdAt: nowIso, createdAtMs: nowMs }, payload));
-      }
+      if (idx >= 0) rows[idx] = Object.assign({}, rows[idx], payload);
+      else rows.push(Object.assign({ id: customer.id, createdAt: nowIso, createdAtMs: nowMs }, payload));
       writeLocalJSON(LOCAL_CUSTOMERS_KEY, rows);
       return customer.id;
     }
@@ -303,12 +327,16 @@ document.addEventListener('DOMContentLoaded', function () {
   async function deleteCustomerRecord(id) {
     if (!id) return;
     const db = await getDb();
-    if (db) {
+    if (db && !customersWriteDenied) {
       try {
         await db.collection('adminCustomers').doc(id).delete();
         return;
       } catch (e) {
-        console.warn('Customers delete failed (firestore):', e);
+        if (isPermissionDenied(e)) {
+          customersWriteDenied = true;
+        } else {
+          console.warn('Customers delete failed (firestore):', e);
+        }
       }
     }
     const rows = readLocalJSON(LOCAL_CUSTOMERS_KEY, []);
@@ -317,144 +345,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function fetchPaymentSources() {
     const db = await getDb();
-    if (db) {
+    if (db && !paymentSourcesReadDenied) {
       try {
-        const snap = await db.collection('adminPaymentSources').orderBy('updatedAtMs', 'desc').limit(200).get();
+        const snap = await db.collection('adminPaymentSources').orderBy('updatedAtMs', 'desc').limit(400).get();
         return { source: 'firestore', rows: snap.docs.map(function (doc) { return Object.assign({ id: doc.id }, doc.data()); }) };
       } catch (e) {
-        console.warn('Payment sources fetch failed (firestore):', e);
+        if (isPermissionDenied(e)) {
+          paymentSourcesReadDenied = true;
+        } else {
+          console.warn('Payment sources fetch failed (firestore):', e);
+        }
       }
     }
     return { source: 'local', rows: toSortedRows(readLocalJSON(LOCAL_PAYMENT_SOURCES_KEY, [])) };
   }
 
-  async function savePaymentSourceRecord(source) {
-    const nowIso = new Date().toISOString();
-    const nowMs = Date.now();
-    const payload = {
-      name: String(source.name || '').trim(),
-      type: String(source.type || 'other').trim().toLowerCase(),
-      details: String(source.details || '').trim(),
-      qrImageData: String(source.qrImageData || '').trim(),
-      paymentEmailTemplate: String(source.paymentEmailTemplate || '').trim(),
-      paymentSmsTemplate: String(source.paymentSmsTemplate || '').trim(),
-      updatedAt: nowIso,
-      updatedAtMs: nowMs
-    };
-    const db = await getDb();
-    if (db) {
-      try {
-        if (source.id) {
-          await db.collection('adminPaymentSources').doc(source.id).set(payload, { merge: true });
-          return source.id;
-        }
-        payload.createdAt = nowIso;
-        payload.createdAtMs = nowMs;
-        const ref = await db.collection('adminPaymentSources').add(payload);
-        return ref.id;
-      } catch (e) {
-        console.warn('Payment source save failed (firestore):', e);
-      }
-    }
-    const rows = readLocalJSON(LOCAL_PAYMENT_SOURCES_KEY, []);
-    if (source.id) {
-      const idx = rows.findIndex(function (x) { return String(x.id) === String(source.id); });
-      if (idx >= 0) rows[idx] = Object.assign({}, rows[idx], payload);
-      else rows.push(Object.assign({ id: source.id, createdAt: nowIso, createdAtMs: nowMs }, payload));
-      writeLocalJSON(LOCAL_PAYMENT_SOURCES_KEY, rows);
-      return source.id;
-    }
-    const id = makeLocalId('pay');
-    rows.push(Object.assign({ id: id, createdAt: nowIso, createdAtMs: nowMs }, payload));
-    writeLocalJSON(LOCAL_PAYMENT_SOURCES_KEY, rows);
-    return id;
-  }
-
-  async function deletePaymentSourceRecord(id) {
-    if (!id) return;
-    const db = await getDb();
-    if (db) {
-      try {
-        await db.collection('adminPaymentSources').doc(id).delete();
-        return;
-      } catch (e) {
-        console.warn('Payment source delete failed (firestore):', e);
-      }
-    }
-    const rows = readLocalJSON(LOCAL_PAYMENT_SOURCES_KEY, []);
-    writeLocalJSON(LOCAL_PAYMENT_SOURCES_KEY, rows.filter(function (x) { return String(x.id) !== String(id); }));
-  }
-
   async function fetchTemplates() {
     const db = await getDb();
-    if (db) {
+    if (db && !templatesReadDenied) {
       try {
         const doc = await db.collection(TEMPLATES_DOC_PATH.collection).doc(TEMPLATES_DOC_PATH.doc).get();
-        if (doc.exists) {
-          return { source: 'firestore', data: Object.assign({}, TEMPLATE_DEFAULTS, doc.data() || {}) };
-        }
+        if (doc.exists) return { source: 'firestore', data: Object.assign({}, TEMPLATE_DEFAULTS, doc.data() || {}) };
       } catch (e) {
-        console.warn('Templates fetch failed (firestore):', e);
+        if (isPermissionDenied(e)) {
+          templatesReadDenied = true;
+        } else {
+          console.warn('Templates fetch failed (firestore):', e);
+        }
       }
     }
     return { source: 'local', data: Object.assign({}, TEMPLATE_DEFAULTS, readLocalJSON(LOCAL_TEMPLATES_KEY, {})) };
   }
 
-  async function saveTemplates(data) {
-    const payload = Object.assign({}, data, {
-      updatedAt: new Date().toISOString(),
-      updatedAtMs: Date.now()
-    });
-    const db = await getDb();
-    if (db) {
-      try {
-        await db.collection(TEMPLATES_DOC_PATH.collection).doc(TEMPLATES_DOC_PATH.doc).set(payload, { merge: true });
-        return;
-      } catch (e) {
-        console.warn('Templates save failed (firestore):', e);
-      }
-    }
-    writeLocalJSON(LOCAL_TEMPLATES_KEY, payload);
-  }
-
-  function applyTemplatesToForm() {
-    quoteEmailSubjectInput.value = String(templates.quoteEmailSubject || TEMPLATE_DEFAULTS.quoteEmailSubject);
-    quoteEmailBodyInput.value = String(templates.quoteEmailBody || TEMPLATE_DEFAULTS.quoteEmailBody);
-    quoteSmsBodyInput.value = String(templates.quoteSmsBody || TEMPLATE_DEFAULTS.quoteSmsBody);
-    paymentEmailSubjectInput.value = String(templates.paymentEmailSubject || TEMPLATE_DEFAULTS.paymentEmailSubject);
-    paymentEmailBodyInput.value = String(templates.paymentEmailBody || TEMPLATE_DEFAULTS.paymentEmailBody);
-    paymentSmsBodyInput.value = String(templates.paymentSmsBody || TEMPLATE_DEFAULTS.paymentSmsBody);
-  }
-
-  function readTemplatesFromForm() {
-    return {
-      quoteEmailSubject: String(quoteEmailSubjectInput.value || '').trim(),
-      quoteEmailBody: String(quoteEmailBodyInput.value || '').trim(),
-      quoteSmsBody: String(quoteSmsBodyInput.value || '').trim(),
-      paymentEmailSubject: String(paymentEmailSubjectInput.value || '').trim(),
-      paymentEmailBody: String(paymentEmailBodyInput.value || '').trim(),
-      paymentSmsBody: String(paymentSmsBodyInput.value || '').trim()
-    };
-  }
-
-  function fillTemplate(template, tokens) {
-    return String(template || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, function (_, key) {
-      return Object.prototype.hasOwnProperty.call(tokens, key) ? String(tokens[key]) : '';
-    });
-  }
-
-  function getSelectedCustomer() {
-    return customers.find(function (c) { return String(c.id) === String(selectedCustomerId); }) || null;
-  }
-
-  function getSelectedPaymentSource() {
-    return paymentSources.find(function (s) { return String(s.id) === String(selectedPaymentSourceId); }) || null;
-  }
-
-  function buildTemplateTokens(customer, paymentSource) {
+  function buildTokens(customer, source) {
     const safeCustomer = customer || {};
-    const safeSource = paymentSource || {};
-    return {
+    const safeSource = source || {};
+    const rawDataQr = String(safeSource.qrImageData || '').trim();
+    const rawPublicQr = String(safeSource.qrPublicUrl || '').trim();
+    const rawQr = rawDataQr || rawPublicQr;
+    let paymentQrInfo = 'No QR code provided.';
+    if (rawDataQr.startsWith('data:image')) {
+      paymentQrInfo = 'Exact source QR is available on the payment page.';
+    } else if (/^https?:\/\//i.test(rawQr)) {
+      paymentQrInfo = rawQr;
+    }
+
+    const baseTokens = {
       name: String(safeCustomer.name || ''),
       email: String(safeCustomer.email || ''),
       phone: String(safeCustomer.phone || ''),
@@ -463,9 +399,21 @@ document.addEventListener('DOMContentLoaded', function () {
       notes: String(safeCustomer.notes || 'No additional notes.'),
       paymentMethodName: String(safeSource.name || ''),
       paymentMethodType: String(safeSource.type || ''),
-      paymentDetails: String(safeSource.details || ''),
-      today: new Date().toLocaleDateString('en-US')
+      paymentLookupValue: String(safeSource.lookupValue || ''),
+      today: new Date().toLocaleDateString('en-US'),
+      paymentQrInfo: paymentQrInfo,
+      paymentPageUrl: ''
     };
+
+    return Object.assign({}, baseTokens, {
+      paymentDetails: fillTemplate(String(safeSource.details || ''), baseTokens)
+    });
+  }
+
+  function fillTemplate(template, tokens) {
+    return String(template || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, function (_, key) {
+      return Object.prototype.hasOwnProperty.call(tokens, key) ? String(tokens[key]) : '';
+    });
   }
 
   function toSmsUrl(phone, body) {
@@ -476,73 +424,145 @@ document.addEventListener('DOMContentLoaded', function () {
     return 'sms:' + number + separator + 'body=' + encodeURIComponent(body);
   }
 
-  function sendMailto(email, subject, body) {
+  function buildEmailUrl(email, subject, body, service) {
+    const to = String(email || '').trim();
+    const safeSubject = String(subject || '');
+    const safeBody = String(body || '');
+    const selectedService = String(service || 'default').toLowerCase();
+    if (selectedService === 'gmail') {
+      return 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) +
+        '&su=' + encodeURIComponent(safeSubject) +
+        '&body=' + encodeURIComponent(safeBody);
+    }
+    if (selectedService === 'outlook') {
+      return 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(to) +
+        '&subject=' + encodeURIComponent(safeSubject) +
+        '&body=' + encodeURIComponent(safeBody);
+    }
+    if (selectedService === 'yahoo') {
+      return 'https://mail.yahoo.com/d/compose?to=' + encodeURIComponent(to) +
+        '&subject=' + encodeURIComponent(safeSubject) +
+        '&body=' + encodeURIComponent(safeBody);
+    }
+    return 'mailto:' + encodeURIComponent(to) +
+      '?subject=' + encodeURIComponent(safeSubject) +
+      '&body=' + encodeURIComponent(safeBody);
+  }
+
+  function sendMailto(email, subject, body, service) {
     if (!email) {
-      setStatus('Customer email is missing. Add an email address first.', false, true);
+      setStatus('Customer email is missing.', false, true);
       return false;
     }
-    const url = 'mailto:' + encodeURIComponent(email) +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body=' + encodeURIComponent(body);
-    window.location.href = url;
+    const url = buildEmailUrl(email, subject, body, service || 'default');
+    window.location.assign(url);
     return true;
   }
 
   function sendSms(phone, body) {
     if (!phone) {
-      setStatus('Customer phone number is missing. Add a phone number first.', false, true);
+      setStatus('Customer phone number is missing.', false, true);
       return false;
     }
     window.location.href = toSmsUrl(phone, body);
     return true;
   }
 
-  function clearCustomerForm() {
-    customerIdInput.value = '';
-    customerNameInput.value = '';
-    customerPhoneInput.value = '';
-    customerEmailInput.value = '';
-    customerQuotedPriceInput.value = '';
-    customerPaidStatusInput.value = 'not_paid';
-    customerNotesInput.value = '';
-    selectedCustomerId = '';
-    renderCustomersTable();
+  function resolvePublicSiteBaseUrl() {
+    const host = String(window.location.hostname || '').toLowerCase();
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (isLocal) return window.location.origin;
+    return 'https://floridasignsolution.com';
   }
 
-  function populateCustomerForm(customer) {
-    if (!customer) return;
-    customerIdInput.value = String(customer.id || '');
-    customerNameInput.value = String(customer.name || '');
-    customerPhoneInput.value = String(customer.phone || '');
-    customerEmailInput.value = String(customer.email || '');
-    customerQuotedPriceInput.value = Number.isFinite(Number(customer.quotedPrice)) ? String(customer.quotedPrice) : '';
-    customerPaidStatusInput.value = customer.paymentStatus === 'paid' ? 'paid' : 'not_paid';
-    customerNotesInput.value = String(customer.notes || '');
-    selectedCustomerId = String(customer.id || '');
-    renderCustomersTable();
+  function cleanupLocalQrShareCache() {
+    try {
+      const now = Date.now();
+      const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+      Object.keys(localStorage).forEach(function (key) {
+        if (key.indexOf('PAYMENT_QR_SHARE_V1:') !== 0) return;
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try {
+          const parsed = JSON.parse(raw);
+          const createdAt = Number(parsed && parsed.createdAt || 0);
+          if (!createdAt || (now - createdAt) > maxAgeMs) {
+            localStorage.removeItem(key);
+          }
+        } catch (_) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (_) {}
   }
 
-  function clearPaymentSourceForm() {
-    paymentSourceIdInput.value = '';
-    paymentSourceNameInput.value = '';
-    paymentSourceTypeInput.value = 'venmo';
-    paymentSourceDetailsInput.value = '';
-    paymentSourceQrDataInput.value = '';
-    paymentSourceQrFileInput.value = '';
-    paymentSourceEmailTemplateInput.value = '';
-    paymentSourceSmsTemplateInput.value = '';
+  function stashQrDataForPaymentPage(qrData) {
+    const dataUrl = String(qrData || '').trim();
+    if (!dataUrl.startsWith('data:image')) return '';
+    try {
+      cleanupLocalQrShareCache();
+      const key = 'qr-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      const storageKey = 'PAYMENT_QR_SHARE_V1:' + key;
+      localStorage.setItem(storageKey, JSON.stringify({
+        dataUrl: dataUrl,
+        createdAt: Date.now()
+      }));
+      return key;
+    } catch (_) {
+      return '';
+    }
   }
 
-  function populatePaymentSourceForm(source) {
-    if (!source) return;
-    paymentSourceIdInput.value = String(source.id || '');
-    paymentSourceNameInput.value = String(source.name || '');
-    paymentSourceTypeInput.value = String(source.type || 'other');
-    paymentSourceDetailsInput.value = String(source.details || '');
-    paymentSourceQrDataInput.value = String(source.qrImageData || '');
-    paymentSourceEmailTemplateInput.value = String(source.paymentEmailTemplate || '');
-    paymentSourceSmsTemplateInput.value = String(source.paymentSmsTemplate || '');
-    paymentSourceQrFileInput.value = '';
+  function buildPaymentInstructionsUrl(source, tokens) {
+    const pageUrl = new URL('/payment-instructions.html', resolvePublicSiteBaseUrl());
+    pageUrl.searchParams.set('source', String(tokens.paymentMethodName || 'Payment Source'));
+    pageUrl.searchParams.set('type', String(tokens.paymentMethodType || ''));
+    pageUrl.searchParams.set('lookup', String(tokens.paymentLookupValue || ''));
+    pageUrl.searchParams.set('details', String(tokens.paymentDetails || ''));
+    pageUrl.searchParams.set('amount', String(tokens.quotedPrice || ''));
+    pageUrl.searchParams.set('customer', String(tokens.name || ''));
+    pageUrl.searchParams.set('source_id', String(source && source.id || ''));
+
+    const qrData = String(source && source.qrImageData || '').trim();
+    const qrPublic = String(source && source.qrPublicUrl || '').trim();
+    if (qrData.startsWith('data:image')) {
+      const qrKey = stashQrDataForPaymentPage(qrData);
+      if (qrKey) {
+        pageUrl.searchParams.set('qr_key', qrKey);
+      } else {
+        pageUrl.searchParams.set('qr_note', 'QR exists but could not be shared from this device.');
+      }
+      if (/^https?:\/\//i.test(qrPublic)) {
+        pageUrl.searchParams.set('qr_fallback', qrPublic);
+      }
+    } else if (/^https?:\/\//i.test(qrPublic)) {
+      pageUrl.searchParams.set('qr', qrPublic);
+    }
+    const qrPayload = [
+      'Source: ' + String(tokens.paymentMethodName || ''),
+      'Type: ' + String(tokens.paymentMethodType || ''),
+      'Find Me As: ' + String(tokens.paymentLookupValue || ''),
+      'Amount: ' + String(tokens.quotedPrice || ''),
+      'Customer: ' + String(tokens.name || ''),
+      'Details: ' + String(tokens.paymentDetails || '')
+    ].join('\n');
+    pageUrl.searchParams.set('qr_text', qrPayload);
+    return pageUrl.toString();
+  }
+
+  function ensurePaymentPageInMessage(message, pageUrl) {
+    const text = String(message || '');
+    if (!pageUrl) return text;
+    if (text.indexOf(pageUrl) !== -1) return text;
+    return text + '\n\nPayment Page URL:\n' + pageUrl;
+  }
+
+  function getSelectedCustomer() {
+    return customers.find(function (c) { return String(c.id) === String(selectedCustomerId); }) || null;
+  }
+
+  function getSelectedPaymentSource() {
+    return paymentSources.find(function (s) { return String(s.id) === String(selectedPaymentSourceId); }) || null;
   }
 
   function updatePaymentSourceSelect() {
@@ -573,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const source = getSelectedPaymentSource();
     if (!source) {
       paymentSourcePreview.value = 'No payment source selected.';
-      paymentSourceQrPreview.hidden = true;
+      paymentSourceQrPreview.classList.add('hidden');
       paymentSourceQrImage.removeAttribute('src');
       return;
     }
@@ -583,119 +603,216 @@ document.addEventListener('DOMContentLoaded', function () {
       'Details:',
       String(source.details || '')
     ].join('\n');
-    const qr = String(source.qrImageData || '');
-    if (qr.startsWith('data:image')) {
-      paymentSourceQrImage.src = qr;
-      paymentSourceQrPreview.hidden = false;
+    const qrDisplay = String(source.qrImageData || source.qrPublicUrl || '');
+    if (qrDisplay.startsWith('data:image') || /^https?:\/\//i.test(qrDisplay)) {
+      paymentSourceQrImage.src = qrDisplay;
+      paymentSourceQrPreview.classList.remove('hidden');
     } else {
-      paymentSourceQrPreview.hidden = true;
+      paymentSourceQrPreview.classList.add('hidden');
       paymentSourceQrImage.removeAttribute('src');
     }
   }
 
-  function renderPaymentSourcesList() {
-    paymentSourcesList.innerHTML = '';
+  function isPaymentTriggerAction(actionType) {
+    return actionType === 'payment_email' || actionType === 'payment_sms';
+  }
+
+  function isEmailTriggerAction(actionType) {
+    return actionType === 'quote_email' || actionType === 'payment_email';
+  }
+
+  function populateTriggerPaymentSources() {
+    if (!triggerPaymentSourceInput) return;
+    triggerPaymentSourceInput.innerHTML = '';
     if (!paymentSources.length) {
-      const empty = document.createElement('p');
-      empty.className = 'muted';
-      empty.textContent = 'No payment sources yet.';
-      paymentSourcesList.appendChild(empty);
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'No payment source configured';
+      triggerPaymentSourceInput.appendChild(opt);
       return;
     }
     paymentSources.forEach(function (source) {
-      const item = document.createElement('article');
-      item.className = 'source-item' + (String(source.id) === String(selectedPaymentSourceId) ? ' active' : '');
-
-      const title = document.createElement('h3');
-      title.textContent = String(source.name || 'Payment Source') + ' (' + String(source.type || 'other') + ')';
-      item.appendChild(title);
-
-      const detail = document.createElement('p');
-      detail.textContent = String(source.details || 'No details added.');
-      item.appendChild(detail);
-
-      const qr = String(source.qrImageData || '');
-      if (qr.startsWith('data:image')) {
-        const wrap = document.createElement('div');
-        wrap.className = 'qr-preview';
-        const img = document.createElement('img');
-        img.src = qr;
-        img.alt = String(source.name || 'Payment source') + ' QR code';
-        wrap.appendChild(img);
-        item.appendChild(wrap);
-      }
-
-      const actions = document.createElement('div');
-      actions.className = 'item-actions';
-
-      const useBtn = document.createElement('button');
-      useBtn.type = 'button';
-      useBtn.textContent = 'Use';
-      useBtn.addEventListener('click', function () {
-        selectedPaymentSourceId = String(source.id);
-        selectedPaymentSourceInput.value = selectedPaymentSourceId;
-        updatePaymentSourcePreview();
-        renderPaymentSourcesList();
-      });
-      actions.appendChild(useBtn);
-
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'ghost';
-      editBtn.textContent = 'Edit';
-      editBtn.addEventListener('click', function () {
-        populatePaymentSourceForm(source);
-      });
-      actions.appendChild(editBtn);
-
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'danger';
-      delBtn.textContent = 'Delete';
-      delBtn.addEventListener('click', async function () {
-        const ok = window.confirm('Delete this payment source?');
-        if (!ok) return;
-        await deletePaymentSourceRecord(source.id);
-        if (String(selectedPaymentSourceId) === String(source.id)) selectedPaymentSourceId = '';
-        await loadWorkspace();
-        setStatus('Payment source deleted.', true, false);
-      });
-      actions.appendChild(delBtn);
-
-      item.appendChild(actions);
-      paymentSourcesList.appendChild(item);
+      const opt = document.createElement('option');
+      opt.value = String(source.id || '');
+      opt.textContent = String(source.name || 'Payment Source') + ' (' + String(source.type || 'other') + ')';
+      triggerPaymentSourceInput.appendChild(opt);
     });
+    triggerPaymentSourceInput.value = String(selectedPaymentSourceId || paymentSources[0].id || '');
+    syncTriggerQrPreview();
+  }
+
+  function syncTriggerFieldsByAction() {
+    const actionType = String((triggerActionTypeInput && triggerActionTypeInput.value) || '');
+    const showPaymentSource = isPaymentTriggerAction(actionType);
+    const showEmailService = isEmailTriggerAction(actionType);
+    if (triggerPaymentSourceRow) triggerPaymentSourceRow.classList.toggle('hidden', !showPaymentSource);
+    if (triggerEmailServiceRow) triggerEmailServiceRow.classList.toggle('hidden', !showEmailService);
+    if (!showPaymentSource && triggerQrPreview) {
+      triggerQrPreview.classList.add('hidden');
+    }
+  }
+
+  function syncTriggerQrPreview() {
+    if (!triggerQrPreview || !triggerQrImage) return;
+    const sourceId = String((triggerPaymentSourceInput && triggerPaymentSourceInput.value) || '');
+    const source = paymentSources.find(function (row) { return String(row.id) === sourceId; }) || null;
+    const qr = String(source && (source.qrImageData || source.qrPublicUrl) || '').trim();
+    if (qr.startsWith('data:image') || /^https?:\/\//i.test(qr)) {
+      triggerQrImage.src = qr;
+      triggerQrPreview.classList.remove('hidden');
+      return;
+    }
+    triggerQrImage.removeAttribute('src');
+    triggerQrPreview.classList.add('hidden');
+  }
+
+  function closeTriggerModal() {
+    if (!triggerModal) return;
+    triggerModal.classList.add('hidden');
+    triggerModal.setAttribute('aria-hidden', 'true');
+    if (triggerQrImage) triggerQrImage.removeAttribute('src');
+    if (triggerQrPreview) triggerQrPreview.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function ensureConfirmOverlay() {
+    let overlay = document.getElementById('adminConfirmOverlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'adminConfirmOverlay';
+    overlay.className = 'confirm-overlay';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function showConfirmDialog(options) {
+    const overlay = ensureConfirmOverlay();
+    overlay.innerHTML = [
+      '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-label="Confirm deletion">',
+      '  <h3 style="margin:0 0 8px;font-size:16px;">' + String((options && options.title) || 'Delete this customer?') + '</h3>',
+      '  <p class="muted" style="margin:0 0 12px;">' + String((options && options.message) || 'This action cannot be undone.') + '</p>',
+      '  <div class="confirm-actions">',
+      '    <button class="btn-danger" id="confirmDeleteBtn">' + String((options && options.confirmText) || 'Yes, Delete') + '</button>',
+      '    <button class="secondary" id="confirmCancelBtn">' + String((options && options.cancelText) || 'Cancel') + '</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+    overlay.classList.add('show');
+    return new Promise(function (resolve) {
+      const onCancel = function () { cleanup(); resolve(false); };
+      const onConfirm = function () { cleanup(); resolve(true); };
+      const cleanup = function () {
+        overlay.classList.remove('show');
+        overlay.innerHTML = '';
+        overlay.removeEventListener('click', backdropClick);
+        document.removeEventListener('keydown', onKeyDown);
+      };
+      const backdropClick = function (event) {
+        if (event.target === overlay) onCancel();
+      };
+      const onKeyDown = function (event) {
+        if (event.key === 'Escape') onCancel();
+      };
+      overlay.addEventListener('click', backdropClick);
+      document.addEventListener('keydown', onKeyDown);
+      const confirmBtn = overlay.querySelector('#confirmDeleteBtn');
+      const cancelBtn = overlay.querySelector('#confirmCancelBtn');
+      if (cancelBtn) cancelBtn.onclick = onCancel;
+      if (confirmBtn) confirmBtn.onclick = onConfirm;
+      if (confirmBtn) confirmBtn.focus();
+    });
+  }
+
+  function openTriggerModal(customer) {
+    if (!triggerModal || !customer) return;
+    selectedTriggerCustomerId = String(customer.id || '');
+    triggerCustomerIdInput.value = selectedTriggerCustomerId;
+    triggerModalCustomer.textContent = 'Customer: ' + String(customer.name || 'Unknown');
+    triggerActionTypeInput.value = 'quote_email';
+    if (triggerEmailServiceInput) triggerEmailServiceInput.value = 'default';
+    populateTriggerPaymentSources();
+    syncTriggerFieldsByAction();
+    syncTriggerQrPreview();
+    triggerModal.classList.remove('hidden');
+    triggerModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function getTriggerCustomer() {
+    return customers.find(function (c) {
+      return String(c.id) === String(selectedTriggerCustomerId || triggerCustomerIdInput.value || '');
+    }) || null;
+  }
+
+  function clearCustomerForm() {
+    customerForm.reset();
+    customerIdInput.value = '';
+    customerPaidStatusInput.value = 'not_paid';
+    selectedCustomerId = '';
+    customerDetailTitle.textContent = 'Add New Customer';
+    updateCustomerActionsState();
+  }
+
+  function populateCustomerForm(customer) {
+    if (!customer) return;
+    customerIdInput.value = String(customer.id || '');
+    customerNameInput.value = String(customer.name || '');
+    customerPhoneInput.value = String(customer.phone || '');
+    customerEmailInput.value = String(customer.email || '');
+    customerQuotedPriceInput.value = Number.isFinite(Number(customer.quotedPrice)) ? String(customer.quotedPrice) : '';
+    customerPaidStatusInput.value = customer.paymentStatus === 'paid' ? 'paid' : 'not_paid';
+    customerNotesInput.value = String(customer.notes || '');
+    selectedCustomerId = String(customer.id || '');
+    customerDetailTitle.textContent = String(customer.name || 'Customer') + ' - Details';
+    updateCustomerActionsState();
+  }
+
+  function updateCustomerActionsState() {
+    const hasSavedCustomer = !!String(customerIdInput.value || selectedCustomerId || '').trim();
+    if (customerActionsPanel) {
+      customerActionsPanel.classList.toggle('hidden', !hasSavedCustomer);
+    }
+    if (customerActionsNotice) {
+      customerActionsNotice.classList.toggle('hidden', hasSavedCustomer);
+    }
+    if (!hasSavedCustomer) {
+      paymentSourcePreview.value = 'Save this customer first to access payment source actions.';
+      if (paymentSourceQrPreview) paymentSourceQrPreview.classList.add('hidden');
+      if (paymentSourceQrImage) paymentSourceQrImage.removeAttribute('src');
+    } else {
+      updatePaymentSourcePreview();
+    }
   }
 
   function renderCustomersTable() {
     customersTableBody.innerHTML = '';
     if (!customers.length) {
-      customersEmpty.hidden = false;
+      customersEmpty.classList.remove('hidden');
       return;
     }
-    customersEmpty.hidden = true;
+    customersEmpty.classList.add('hidden');
 
     customers.forEach(function (customer) {
       const tr = document.createElement('tr');
-      if (String(customer.id) === String(selectedCustomerId)) {
-        tr.style.background = 'rgba(34, 211, 238, 0.08)';
-      }
-
       const nameTd = document.createElement('td');
       const nameBtn = document.createElement('button');
       nameBtn.type = 'button';
       nameBtn.className = 'name-btn';
       nameBtn.textContent = String(customer.name || 'Unknown');
-      nameBtn.addEventListener('click', function () { populateCustomerForm(customer); });
+      nameBtn.addEventListener('click', function () {
+        populateCustomerForm(customer);
+        showCustomerDetail();
+      });
       nameTd.appendChild(nameBtn);
       tr.appendChild(nameTd);
 
-      const contactTd = document.createElement('td');
-      const contact = [String(customer.email || '').trim(), String(customer.phone || '').trim()]
-        .filter(function (x) { return !!x; })
-        .join(' / ');
-      contactTd.textContent = contact || '—';
-      tr.appendChild(contactTd);
+      const emailTd = document.createElement('td');
+      emailTd.textContent = String(customer.email || '-');
+      tr.appendChild(emailTd);
+
+      const phoneTd = document.createElement('td');
+      phoneTd.textContent = String(customer.phone || '-');
+      tr.appendChild(phoneTd);
 
       const quoteTd = document.createElement('td');
       quoteTd.textContent = formatCurrency(customer.quotedPrice || 0);
@@ -703,9 +820,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const statusTd = document.createElement('td');
       const pill = document.createElement('span');
-      const isPaid = customer.paymentStatus === 'paid';
-      pill.className = 'pill ' + (isPaid ? 'paid' : 'not-paid');
-      pill.textContent = isPaid ? 'Paid' : 'Not Paid';
+      const paid = customer.paymentStatus === 'paid';
+      pill.className = 'pill ' + (paid ? 'paid' : 'not-paid');
+      pill.textContent = paid ? 'Paid' : 'Not Paid';
       statusTd.appendChild(pill);
       tr.appendChild(statusTd);
 
@@ -714,74 +831,90 @@ document.addEventListener('DOMContentLoaded', function () {
       tr.appendChild(updatedTd);
 
       const actionsTd = document.createElement('td');
-      const actions = document.createElement('div');
-      actions.className = 'row-actions';
+      const actionsWrap = document.createElement('div');
+      actionsWrap.className = 'actions';
+      const triggerBtn = document.createElement('button');
+      triggerBtn.type = 'button';
+      triggerBtn.className = 'trigger-btn';
+      triggerBtn.textContent = 'Trigger';
+      triggerBtn.addEventListener('click', function () {
+        openTriggerModal(customer);
+      });
+      actionsWrap.appendChild(triggerBtn);
 
-      const openBtn = document.createElement('button');
-      openBtn.type = 'button';
-      openBtn.textContent = 'Open';
-      openBtn.addEventListener('click', function () { populateCustomerForm(customer); });
-      actions.appendChild(openBtn);
-
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'danger';
-      delBtn.textContent = 'Delete';
-      delBtn.addEventListener('click', async function () {
-        const ok = window.confirm('Delete this customer record?');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'danger trigger-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', async function () {
+        const id = String(customer && customer.id || '').trim();
+        if (!id) {
+          setStatus('Unable to delete: customer ID is missing.', false, true);
+          return;
+        }
+        const ok = await showConfirmDialog({
+          title: 'Delete this customer?',
+          message: 'Are you sure you want to delete customer "' + String(customer.name || 'Unknown') + '"? This action cannot be undone.',
+          confirmText: 'Yes, Delete',
+          cancelText: 'Cancel'
+        });
         if (!ok) return;
-        await deleteCustomerRecord(customer.id);
-        if (String(selectedCustomerId) === String(customer.id)) clearCustomerForm();
+        await deleteCustomerRecord(id);
+        if (String(selectedCustomerId || '') === id) {
+          clearCustomerForm();
+          showCustomerList();
+        }
         await loadWorkspace();
         setStatus('Customer deleted.', true, false);
       });
-      actions.appendChild(delBtn);
+      actionsWrap.appendChild(deleteBtn);
 
-      actionsTd.appendChild(actions);
+      actionsTd.appendChild(actionsWrap);
       tr.appendChild(actionsTd);
+
       customersTableBody.appendChild(tr);
     });
   }
 
   async function loadWorkspace() {
     setStatus('Loading customer workspace...', false, false);
-    const result = await Promise.all([fetchCustomers(), fetchPaymentSources(), fetchTemplates()]);
-    const customerResult = result[0];
-    const paymentResult = result[1];
-    const templateResult = result[2];
+    const results = await Promise.all([fetchCustomers(), fetchPaymentSources(), fetchTemplates()]);
+    const customerResult = results[0];
+    const sourceResult = results[1];
+    const templateResult = results[2];
 
     customers = toSortedRows(customerResult.rows || []);
-    paymentSources = toSortedRows(paymentResult.rows || []);
+    paymentSources = toSortedRows(sourceResult.rows || []);
     templates = Object.assign({}, TEMPLATE_DEFAULTS, templateResult.data || {});
+    activeDataSource = (
+      customerResult.source === 'firestore' ||
+      sourceResult.source === 'firestore' ||
+      templateResult.source === 'firestore'
+    ) ? 'firestore' : 'local';
 
-    if (customerResult.source === 'firestore' || paymentResult.source === 'firestore' || templateResult.source === 'firestore') {
-      activeDataSource = 'firestore';
-    } else {
-      activeDataSource = 'local';
-    }
-
-    applyTemplatesToForm();
-    updatePaymentSourceSelect();
-    renderPaymentSourcesList();
     renderCustomersTable();
+    updatePaymentSourceSelect();
+    populateTriggerPaymentSources();
 
-    const customerStillExists = customers.some(function (c) { return String(c.id) === String(selectedCustomerId); });
-    if (!customerStillExists && selectedCustomerId) clearCustomerForm();
+    if (selectedCustomerId) {
+      const fresh = customers.find(function (c) { return String(c.id) === String(selectedCustomerId); });
+      if (fresh) {
+        populateCustomerForm(fresh);
+      } else {
+        clearCustomerForm();
+        showCustomerList();
+      }
+    }
 
     if (authWarmupErrorCode.includes('operation-not-allowed') || authWarmupErrorCode.includes('configuration-not-found')) {
-      setStatus(
-        'Loaded from local fallback. Firebase Anonymous Auth is not configured; enable it in Firebase Console for cloud sync.',
-        false,
-        true
-      );
+      setStatus('Loaded from local fallback. Enable Firebase Anonymous Auth for cloud sync.', false, true);
       return;
     }
-    setStatus(
-      'Source: ' + activeDataSource + ' | ' +
-      customers.length + ' customer(s) | ' + paymentSources.length + ' payment source(s)',
-      true,
-      false
-    );
+    if (customersReadDenied || customersWriteDenied || paymentSourcesReadDenied || templatesReadDenied) {
+      setStatus('Source: ' + activeDataSource + ' | ' + customers.length + ' customer(s) | Local fallback active for blocked Firestore collections', true, false);
+      return;
+    }
+    setStatus('Source: ' + activeDataSource + ' | ' + customers.length + ' customer(s)', true, false);
   }
 
   function getCustomerFromForm() {
@@ -796,28 +929,16 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  function getPaymentSourceFromForm() {
-    return {
-      id: String(paymentSourceIdInput.value || '').trim(),
-      name: String(paymentSourceNameInput.value || '').trim(),
-      type: String(paymentSourceTypeInput.value || 'other').trim(),
-      details: String(paymentSourceDetailsInput.value || '').trim(),
-      qrImageData: String(paymentSourceQrDataInput.value || '').trim(),
-      paymentEmailTemplate: String(paymentSourceEmailTemplateInput.value || '').trim(),
-      paymentSmsTemplate: String(paymentSourceSmsTemplateInput.value || '').trim()
-    };
-  }
-
-  function getSelectedCustomerOrWarn() {
+  function requireSelectedCustomer() {
     const customer = getSelectedCustomer();
     if (!customer) {
-      setStatus('Select a customer first.', false, true);
+      setStatus('Open a customer details page first.', false, true);
       return null;
     }
     return customer;
   }
 
-  function getSelectedPaymentSourceOrWarn() {
+  function requireSelectedPaymentSource() {
     const source = getSelectedPaymentSource();
     if (!source) {
       setStatus('Select a payment source first.', false, true);
@@ -827,67 +948,133 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function sendQuoteEmail() {
-    const customer = getSelectedCustomerOrWarn();
+    const customer = requireSelectedCustomer();
     if (!customer) return;
-    const tokens = buildTemplateTokens(customer, null);
-    const subject = fillTemplate(quoteEmailSubjectInput.value, tokens);
-    const body = fillTemplate(quoteEmailBodyInput.value, tokens);
+    const tokens = buildTokens(customer, null);
+    const subject = fillTemplate(templates.quoteEmailSubject, tokens);
+    const body = fillTemplate(templates.quoteEmailBody, tokens);
     if (sendMailto(customer.email, subject, body)) {
       setStatus('Opened quote email draft for ' + customer.name + '.', true, false);
     }
   }
 
   function sendQuoteSms() {
-    const customer = getSelectedCustomerOrWarn();
+    const customer = requireSelectedCustomer();
     if (!customer) return;
-    const tokens = buildTemplateTokens(customer, null);
-    const body = fillTemplate(quoteSmsBodyInput.value, tokens);
+    const tokens = buildTokens(customer, null);
+    const body = fillTemplate(templates.quoteSmsBody, tokens);
     if (sendSms(customer.phone, body)) {
       setStatus('Opened quote SMS draft for ' + customer.name + '.', true, false);
     }
   }
 
   function sendPaymentEmail() {
-    const customer = getSelectedCustomerOrWarn();
+    const customer = requireSelectedCustomer();
     if (!customer) return;
-    const source = getSelectedPaymentSourceOrWarn();
+    const source = requireSelectedPaymentSource();
     if (!source) return;
-    const tokens = buildTemplateTokens(customer, source);
-    const subject = fillTemplate(paymentEmailSubjectInput.value, tokens);
-    const template = source.paymentEmailTemplate || paymentEmailBodyInput.value;
-    const body = fillTemplate(template, tokens);
+    const tokens = buildTokens(customer, source);
+    tokens.paymentPageUrl = buildPaymentInstructionsUrl(source, tokens);
+    const subject = fillTemplate(templates.paymentEmailSubject, tokens);
+    const template = source.paymentEmailTemplate || templates.paymentEmailBody;
+    const body = ensurePaymentPageInMessage(fillTemplate(template, tokens), tokens.paymentPageUrl);
     if (sendMailto(customer.email, subject, body)) {
-      setStatus('Opened payment email draft for ' + customer.name + '.', true, false);
+      setStatus('Opened payment email draft for ' + customer.name + ' with payment page link.', true, false);
     }
   }
 
   function sendPaymentSms() {
-    const customer = getSelectedCustomerOrWarn();
+    const customer = requireSelectedCustomer();
     if (!customer) return;
-    const source = getSelectedPaymentSourceOrWarn();
+    const source = requireSelectedPaymentSource();
     if (!source) return;
-    const tokens = buildTemplateTokens(customer, source);
-    const template = source.paymentSmsTemplate || paymentSmsBodyInput.value;
-    const body = fillTemplate(template, tokens);
+    const tokens = buildTokens(customer, source);
+    tokens.paymentPageUrl = buildPaymentInstructionsUrl(source, tokens);
+    const template = source.paymentSmsTemplate || templates.paymentSmsBody;
+    const body = ensurePaymentPageInMessage(fillTemplate(template, tokens), tokens.paymentPageUrl);
     if (sendSms(customer.phone, body)) {
       setStatus('Opened payment SMS draft for ' + customer.name + '.', true, false);
     }
   }
 
-  function readFileAsDataUrl(file) {
-    return new Promise(function (resolve, reject) {
-      const reader = new FileReader();
-      reader.onload = function () { resolve(String(reader.result || '')); };
-      reader.onerror = function () { reject(new Error('Could not read file')); };
-      reader.readAsDataURL(file);
-    });
+  function runTriggerAction() {
+    const customer = getTriggerCustomer();
+    if (!customer) {
+      setStatus('Select a valid customer for trigger actions.', false, true);
+      return;
+    }
+
+    const actionType = String((triggerActionTypeInput && triggerActionTypeInput.value) || '');
+    const emailService = String((triggerEmailServiceInput && triggerEmailServiceInput.value) || 'default');
+    const paymentSourceId = String((triggerPaymentSourceInput && triggerPaymentSourceInput.value) || '');
+
+    if (actionType === 'quote_email') {
+      const quoteTokens = buildTokens(customer, null);
+      const quoteSubject = fillTemplate(templates.quoteEmailSubject, quoteTokens);
+      const quoteBody = fillTemplate(templates.quoteEmailBody, quoteTokens);
+      if (sendMailto(customer.email, quoteSubject, quoteBody, emailService)) {
+        setStatus('Trigger opened quote email draft for ' + customer.name + '.', true, false);
+        closeTriggerModal();
+      }
+      return;
+    }
+
+    if (actionType === 'quote_sms') {
+      const quoteSmsTokens = buildTokens(customer, null);
+      const quoteSmsBody = fillTemplate(templates.quoteSmsBody, quoteSmsTokens);
+      if (sendSms(customer.phone, quoteSmsBody)) {
+        setStatus('Trigger opened quote message draft for ' + customer.name + '.', true, false);
+        closeTriggerModal();
+      }
+      return;
+    }
+
+    const source = paymentSources.find(function (s) { return String(s.id) === paymentSourceId; }) || null;
+    if (!source) {
+      setStatus('Select a payment source for payment triggers.', false, true);
+      return;
+    }
+
+    const paymentTokens = buildTokens(customer, source);
+    paymentTokens.paymentPageUrl = buildPaymentInstructionsUrl(source, paymentTokens);
+    if (actionType === 'payment_email') {
+      const paymentSubject = fillTemplate(templates.paymentEmailSubject, paymentTokens);
+      const paymentEmailTemplate = source.paymentEmailTemplate || templates.paymentEmailBody;
+      const paymentBody = ensurePaymentPageInMessage(fillTemplate(paymentEmailTemplate, paymentTokens), paymentTokens.paymentPageUrl);
+      if (sendMailto(customer.email, paymentSubject, paymentBody, emailService)) {
+        setStatus('Trigger opened payment email draft for ' + customer.name + ' with payment page link.', true, false);
+        closeTriggerModal();
+      }
+      return;
+    }
+
+    if (actionType === 'payment_sms') {
+      const paymentSmsTemplate = source.paymentSmsTemplate || templates.paymentSmsBody;
+      const paymentSmsBody = ensurePaymentPageInMessage(fillTemplate(paymentSmsTemplate, paymentTokens), paymentTokens.paymentPageUrl);
+      if (sendSms(customer.phone, paymentSmsBody)) {
+        setStatus('Trigger opened payment message draft for ' + customer.name + '.', true, false);
+        closeTriggerModal();
+      }
+      return;
+    }
+
+    setStatus('Select a trigger action.', false, true);
   }
 
   function bindEvents() {
     refreshBtn.addEventListener('click', function () { loadWorkspace(); });
 
-    customerForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
+    addCustomerBtn.addEventListener('click', function () {
+      clearCustomerForm();
+      showCustomerDetail();
+    });
+
+    backToCustomersBtn.addEventListener('click', function () {
+      showCustomerList();
+    });
+
+    customerForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
       const customer = getCustomerFromForm();
       if (!customer.name) {
         setStatus('Customer name is required.', false, true);
@@ -905,86 +1092,62 @@ document.addEventListener('DOMContentLoaded', function () {
       setStatus('Customer saved.', true, false);
     });
 
-    clearCustomerBtn.addEventListener('click', function () {
-      clearCustomerForm();
-      setStatus('Ready to add a new customer.', true, false);
-    });
-
     deleteCustomerBtn.addEventListener('click', async function () {
       const id = String(customerIdInput.value || '').trim();
       if (!id) {
-        setStatus('Select a customer to delete.', false, true);
+        setStatus('No customer selected.', false, true);
         return;
       }
-      const ok = window.confirm('Delete this customer record?');
+      const name = String(customerNameInput.value || 'Unknown').trim() || 'Unknown';
+      const ok = await showConfirmDialog({
+        title: 'Delete this customer?',
+        message: 'Are you sure you want to delete customer "' + name + '"? This action cannot be undone.',
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel'
+      });
       if (!ok) return;
       await deleteCustomerRecord(id);
       clearCustomerForm();
       await loadWorkspace();
+      showCustomerList();
       setStatus('Customer deleted.', true, false);
     });
 
     selectedPaymentSourceInput.addEventListener('change', function () {
       selectedPaymentSourceId = String(selectedPaymentSourceInput.value || '');
       updatePaymentSourcePreview();
-      renderPaymentSourcesList();
     });
 
-    paymentSourceQrFileInput.addEventListener('change', async function () {
-      const file = paymentSourceQrFileInput.files && paymentSourceQrFileInput.files[0];
-      if (!file) return;
-      try {
-        const dataUrl = await readFileAsDataUrl(file);
-        paymentSourceQrDataInput.value = dataUrl;
-        setStatus('QR image loaded for this payment source.', true, false);
-      } catch (_) {
-        setStatus('Could not read QR image.', false, true);
+    if (triggerActionTypeInput) {
+      triggerActionTypeInput.addEventListener('change', function () {
+        syncTriggerFieldsByAction();
+        syncTriggerQrPreview();
+      });
+    }
+
+    if (triggerPaymentSourceInput) {
+      triggerPaymentSourceInput.addEventListener('change', function () {
+        selectedPaymentSourceId = String(triggerPaymentSourceInput.value || '');
+        syncTriggerQrPreview();
+      });
+    }
+
+    if (triggerRunBtn) {
+      triggerRunBtn.addEventListener('click', function () {
+        runTriggerAction();
+      });
+    }
+
+    triggerCloseNodes.forEach(function (node) {
+      node.addEventListener('click', function () {
+        closeTriggerModal();
+      });
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && triggerModal && !triggerModal.classList.contains('hidden')) {
+        closeTriggerModal();
       }
-    });
-
-    paymentSourceForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const source = getPaymentSourceFromForm();
-      if (!source.name) {
-        setStatus('Payment source name is required.', false, true);
-        return;
-      }
-      if (!source.details) {
-        setStatus('Payment source details are required.', false, true);
-        return;
-      }
-      const id = await savePaymentSourceRecord(source);
-      selectedPaymentSourceId = id;
-      clearPaymentSourceForm();
-      await loadWorkspace();
-      setStatus('Payment source saved.', true, false);
-    });
-
-    clearPaymentSourceBtn.addEventListener('click', function () {
-      clearPaymentSourceForm();
-      setStatus('Ready to add a new payment source.', true, false);
-    });
-
-    deletePaymentSourceBtn.addEventListener('click', async function () {
-      const id = String(paymentSourceIdInput.value || '').trim();
-      if (!id) {
-        setStatus('Select/Edit a payment source first.', false, true);
-        return;
-      }
-      const ok = window.confirm('Delete this payment source?');
-      if (!ok) return;
-      await deletePaymentSourceRecord(id);
-      if (String(selectedPaymentSourceId) === id) selectedPaymentSourceId = '';
-      clearPaymentSourceForm();
-      await loadWorkspace();
-      setStatus('Payment source deleted.', true, false);
-    });
-
-    saveTemplatesBtn.addEventListener('click', async function () {
-      const formTemplates = readTemplatesFromForm();
-      await saveTemplates(formTemplates);
-      templates = Object.assign({}, TEMPLATE_DEFAULTS, formTemplates);
-      setStatus('Templates saved.', true, false);
     });
 
     sendQuoteEmailBtn.addEventListener('click', sendQuoteEmail);
@@ -998,6 +1161,8 @@ document.addEventListener('DOMContentLoaded', function () {
     appStarted = true;
     showApp();
     bindEvents();
+    showCustomerList();
+    updateCustomerActionsState();
     loadWorkspace();
   }
 

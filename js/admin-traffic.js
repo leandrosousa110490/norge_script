@@ -11,6 +11,8 @@
   const kpiTop = document.getElementById('kpiTop');
 
   let appStarted = false;
+  let authWarmupPromise = null;
+  let authWarmupErrorCode = '';
 
   function showGate(message) {
     authGate.classList.remove('hidden');
@@ -52,14 +54,50 @@
     });
   }
 
+  async function ensureFirebaseAuthSession() {
+    if (!window.firebase || typeof window.firebase.auth !== 'function') return false;
+    if (!authWarmupPromise) {
+      authWarmupPromise = (async function () {
+        try {
+          authWarmupErrorCode = '';
+          const auth = window.firebase.auth();
+          if (auth.currentUser) return true;
+          await auth.signInAnonymously();
+          return true;
+        } catch (e) {
+          authWarmupErrorCode = String((e && (e.code || e.name)) || '').toLowerCase();
+          console.warn('Traffic auth warmup failed:', e);
+          return false;
+        }
+      })();
+    }
+    return authWarmupPromise;
+  }
+
   async function initFirestoreClient() {
     const cfg = window.FIREBASE_CONFIG;
     if (!isValidFirebaseConfig(cfg)) return null;
     try {
       await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js');
       await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
+      const appCheckKey = String(window.FIREBASE_APPCHECK_SITE_KEY || '').trim();
+      if (appCheckKey) {
+        try {
+          await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js');
+        } catch (_) {}
+      }
       if (!window.firebase) return null;
       if (!window.firebase.apps.length) window.firebase.initializeApp(cfg);
+      await ensureFirebaseAuthSession();
+      if (appCheckKey) {
+        try {
+          const appCheck = window.firebase.appCheck();
+          appCheck.activate(appCheckKey, true);
+        } catch (e) {
+          console.warn('Traffic App Check activation failed:', e);
+        }
+      }
       try {
         const dbTmp = window.firebase.firestore();
         dbTmp.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
@@ -97,12 +135,32 @@
             return Object.assign({ id: doc.id }, doc.data());
           })
         };
-      } catch (_) {}
+      } catch (e) {
+        const code = String((e && (e.code || e.name)) || '').toLowerCase();
+        let reason = '';
+        if (code.includes('permission-denied') || code.includes('unauthenticated')) {
+          if (
+            authWarmupErrorCode.includes('operation-not-allowed') ||
+            authWarmupErrorCode.includes('admin-restricted-operation') ||
+            authWarmupErrorCode.includes('configuration-not-found')
+          ) {
+            reason = 'Anonymous Auth is not enabled.';
+          } else {
+            reason = 'Firestore rules are blocking siteTraffic reads.';
+          }
+        }
+        let localRows = [];
+        try {
+          const raw = JSON.parse(localStorage.getItem('siteTrafficFallback') || '[]');
+          localRows = Array.isArray(raw) ? raw.slice().reverse() : [];
+        } catch (_) {}
+        return { source: 'browser-cache', rows: localRows, reason: reason };
+      }
     }
 
     try {
       const localRows = JSON.parse(localStorage.getItem('siteTrafficFallback') || '[]');
-      return { source: 'local', rows: Array.isArray(localRows) ? localRows.slice().reverse() : [] };
+      return { source: 'browser-cache', rows: Array.isArray(localRows) ? localRows.slice().reverse() : [] };
     } catch (_) {
       return { source: 'none', rows: [] };
     }
@@ -254,7 +312,9 @@
     renderDayChart(rows);
     renderTopPagesChart(rows);
     renderTable(rows);
-    statusEl.textContent = 'Source: ' + result.source + ' | Showing ' + rows.length + ' event(s)';
+    const sourceLabel = result.source === 'browser-cache' ? 'browser-cache' : result.source;
+    const reason = result.reason ? ' | ' + result.reason : '';
+    statusEl.textContent = 'Source: ' + sourceLabel + ' | Showing ' + rows.length + ' event(s)' + reason;
   }
 
   (function gateAccess() {

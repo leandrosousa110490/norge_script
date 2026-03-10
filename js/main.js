@@ -943,6 +943,33 @@ function hasValidTrafficFirebaseConfig() {
     });
 }
 
+let trafficAuthWarmupPromise = null;
+let trafficAuthWarmupErrorCode = '';
+
+async function ensureTrafficAuthSession() {
+    if (!window.firebase || typeof window.firebase.auth !== 'function') {
+        return false;
+    }
+    if (!trafficAuthWarmupPromise) {
+        trafficAuthWarmupPromise = (async function() {
+            try {
+                trafficAuthWarmupErrorCode = '';
+                const auth = window.firebase.auth();
+                if (auth.currentUser) {
+                    return true;
+                }
+                await auth.signInAnonymously();
+                return true;
+            } catch (error) {
+                trafficAuthWarmupErrorCode = String((error && (error.code || error.name)) || '').toLowerCase();
+                console.warn('Traffic auth warmup failed:', error);
+                return false;
+            }
+        })();
+    }
+    return trafficAuthWarmupPromise;
+}
+
 function loadTrafficScriptOnce(src) {
     return new Promise(function(resolve, reject) {
         if (document.querySelector('script[src="' + src + '"]')) {
@@ -968,13 +995,29 @@ async function initTrafficFirestore() {
 
     try {
         await loadTrafficScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+        await loadTrafficScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js');
         await loadTrafficScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
+        const appCheckKey = String(window.FIREBASE_APPCHECK_SITE_KEY || '').trim();
+        if (appCheckKey) {
+            try {
+                await loadTrafficScriptOnce('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check-compat.js');
+            } catch (_) {}
+        }
         if (!window.firebase) {
             return null;
         }
 
         if (!window.firebase.apps.length) {
             window.firebase.initializeApp(window.FIREBASE_CONFIG);
+        }
+        await ensureTrafficAuthSession();
+        if (appCheckKey) {
+            try {
+                const appCheck = window.firebase.appCheck();
+                appCheck.activate(appCheckKey, true);
+            } catch (error) {
+                console.warn('Traffic App Check activation failed:', error);
+            }
         }
 
         try {
@@ -991,8 +1034,25 @@ async function initTrafficFirestore() {
 async function sendTrafficEvent(payload) {
     const db = await initTrafficFirestore();
     if (db) {
-        await db.collection('siteTraffic').add(payload);
-        return;
+        try {
+            await db.collection('siteTraffic').add(payload);
+            return;
+        } catch (error) {
+            const code = String((error && (error.code || error.name)) || '').toLowerCase();
+            if (code.includes('permission-denied') || code.includes('unauthenticated')) {
+                if (
+                    trafficAuthWarmupErrorCode.includes('operation-not-allowed') ||
+                    trafficAuthWarmupErrorCode.includes('admin-restricted-operation') ||
+                    trafficAuthWarmupErrorCode.includes('configuration-not-found')
+                ) {
+                    console.warn('Traffic write blocked: Firebase Anonymous Auth is not enabled.');
+                } else {
+                    console.warn('Traffic write blocked by Firestore rules for siteTraffic.');
+                }
+            } else {
+                console.warn('Traffic write error:', error);
+            }
+        }
     }
 
     try {

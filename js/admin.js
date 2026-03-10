@@ -364,7 +364,7 @@
       if (!selectedRequest) return;
       detailDeleteBtn.disabled = true;
       try {
-        await handleDelete(getRequestId(selectedRequest), -1);
+        await handleDelete(selectedRequest, -1);
         selectedRequest = null;
         showRequestList();
       } finally {
@@ -387,7 +387,7 @@
         .orderBy('timestamp', 'desc')
         .limit(200)
         .get();
-      return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      return snap.docs.map((doc) => ({ id: doc.id, _source: 'firestore', ...doc.data() }));
     } catch (e) {
       console.warn('Firestore fetch failed:', e);
       return null;
@@ -401,11 +401,78 @@
       const res = await fetch(apiUrl);
       if (!res.ok) throw new Error('Server responded ' + res.status);
       const data = await res.json();
-      return Array.isArray(data.quotes) ? data.quotes : null;
+      if (!Array.isArray(data.quotes)) return null;
+      return data.quotes.map((row) => Object.assign({ _source: 'server' }, row || {}));
     } catch (e) {
       console.warn('Server fetch failed:', e);
       return null;
     }
+  }
+
+  function fetchFromLocalStorage() {
+    try {
+      const raw = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
+      if (!Array.isArray(raw)) return null;
+      let mutated = false;
+      raw.forEach((row) => {
+        if (!row || typeof row !== 'object') return;
+        const existingId = String(row.id || '').trim();
+        if (existingId) return;
+        row.id = 'local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+        mutated = true;
+      });
+      if (mutated) {
+        localStorage.setItem('quoteRequests', JSON.stringify(raw));
+      }
+      const normalized = raw.map((row) => {
+        const existingId = String((row && row.id) || '').trim();
+        return Object.assign({}, row || {}, { id: existingId, _source: 'local' });
+      });
+      normalized.sort((a, b) => {
+        const at = normalizeTimestamp(a && a.timestamp);
+        const bt = normalizeTimestamp(b && b.timestamp);
+        return Number(bt ? bt.getTime() : 0) - Number(at ? at.getTime() : 0);
+      });
+      return normalized;
+    } catch (e) {
+      console.warn('Local quoteRequests parse failed:', e);
+      return null;
+    }
+  }
+
+  function localQuoteFingerprint(row) {
+    const name = String((row && row.name) || '').trim().toLowerCase();
+    const email = String((row && row.email) || '').trim().toLowerCase();
+    const phone = String((row && row.phone) || '').replace(/[^\d+]/g, '');
+    const timestamp = String((row && row.timestamp) || '').trim();
+    const message = String((row && (row.message || row.details)) || '').trim().toLowerCase();
+    return [name, email, phone, timestamp, message].join('|');
+  }
+
+  function removeLocalQuoteById(id, targetRow) {
+    const key = String(id || '').trim();
+    const targetFingerprint = localQuoteFingerprint(targetRow || {});
+    if (!key && !targetFingerprint) return;
+    try {
+      const raw = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
+      if (!Array.isArray(raw)) return;
+      let changed = false;
+      const next = raw.filter((row) => {
+        const rowId = String((row && row.id) || '').trim();
+        if (key && rowId === key) {
+          changed = true;
+          return false;
+        }
+        if (!rowId && targetFingerprint && localQuoteFingerprint(row) === targetFingerprint) {
+          changed = true;
+          return false;
+        }
+        return true;
+      });
+      if (changed) {
+        localStorage.setItem('quoteRequests', JSON.stringify(next));
+      }
+    } catch (_) {}
   }
 
   async function markRequestViewed(q) {
@@ -418,7 +485,7 @@
     if (!q.viewedAt) {
       q.viewedAt = new Date().toISOString();
     }
-    if (activeSource === 'firestore' && id) {
+    if (String(q._source || '') === 'firestore' && id) {
       try {
         const db = await initFirestoreClient();
         if (db) {
@@ -568,7 +635,7 @@
       delBtn.addEventListener('click', (ev) => {
         ev.stopPropagation();
         delBtn.disabled = true;
-        handleDelete(q.id || null, i).finally(() => {
+        handleDelete(q, i).finally(() => {
           delBtn.disabled = false;
         });
       });
@@ -763,14 +830,63 @@
     }
   }
 
+  function sourcePriority(source) {
+    const value = String(source || '').toLowerCase();
+    if (value === 'firestore') return 3;
+    if (value === 'server') return 2;
+    if (value === 'local') return 1;
+    return 0;
+  }
+
+  function quoteFingerprint(q) {
+    const name = String((q && q.name) || '').trim().toLowerCase();
+    const email = String((q && q.email) || '').trim().toLowerCase();
+    const phone = String((q && q.phone) || '').replace(/[^\d+]/g, '');
+    const timestamp = String((q && q.timestamp) || '').trim();
+    const message = String((q && (q.message || q.details)) || '').trim().toLowerCase();
+    if (!name && !email && !phone) return '';
+    return [name, email, phone, timestamp, message].join('|');
+  }
+
+  function mergeQuoteSources(firestoreRows, serverRows, localRows) {
+    const map = new Map();
+    const addRows = (rows, sourceName) => {
+      (rows || []).forEach((row) => {
+        const candidate = Object.assign({}, row || {}, { _source: sourceName });
+        const keyById = candidate.id ? ('id:' + String(candidate.id)) : '';
+        const keyByFingerprint = quoteFingerprint(candidate);
+        const key = keyById || ('fp:' + keyByFingerprint);
+        if (!key || key === 'fp:') return;
+        const existing = map.get(key);
+        if (!existing || sourcePriority(candidate._source) >= sourcePriority(existing._source)) {
+          map.set(key, candidate);
+        }
+      });
+    };
+    addRows(localRows, 'local');
+    addRows(serverRows, 'server');
+    addRows(firestoreRows, 'firestore');
+
+    return Array.from(map.values()).sort((a, b) => {
+      const at = normalizeTimestamp(a && a.timestamp);
+      const bt = normalizeTimestamp(b && b.timestamp);
+      return Number(bt ? bt.getTime() : 0) - Number(at ? at.getTime() : 0);
+    });
+  }
+
+  function summarizeSources(quotes) {
+    const values = Array.from(new Set((quotes || []).map((q) => String((q && q._source) || '').trim()).filter(Boolean)));
+    if (!values.length) return 'none';
+    return values.join('+');
+  }
+
   async function loadQuoteRequests() {
     quotesStatus.textContent = 'Loading...';
-    let quotes = await fetchFromFirestore();
-    activeSource = quotes ? 'firestore' : null;
-    if (!quotes) {
-      quotes = await fetchFromServer();
-      activeSource = quotes ? 'server' : null;
-    }
+    const firestoreQuotes = await fetchFromFirestore();
+    const serverQuotes = await fetchFromServer();
+    const localQuotes = fetchFromLocalStorage();
+    let quotes = mergeQuoteSources(firestoreQuotes, serverQuotes, localQuotes);
+    activeSource = summarizeSources(quotes);
 
     // Show only records that exist in the actual DB and have essential fields
     quotes = (quotes || []).filter((q) => {
@@ -846,7 +962,12 @@
     });
   }
 
-  async function handleDelete(id, index) {
+  async function handleDelete(requestRow, index) {
+    const row = (requestRow && typeof requestRow === 'object')
+      ? requestRow
+      : { id: requestRow, _source: String(activeSource || '') };
+    const id = String((row && row.id) || '').trim();
+    const rowSource = String((row && row._source) || '').trim().toLowerCase();
     const ok = await showConfirmDialog({
       title: 'Delete this request?',
       message: 'Are you sure you want to delete this request? This action cannot be undone.',
@@ -856,16 +977,18 @@
     if (!ok) return;
     quotesStatus.textContent = 'Deleting...';
     try {
-      if (activeSource === 'firestore') {
+      if (rowSource === 'firestore') {
         const db = await initFirestoreClient();
         if (!db || !id) throw new Error('Missing Firestore or id');
         await db.collection('quoteRequests').doc(id).delete();
-      } else if (activeSource === 'server') {
+      } else if (rowSource === 'server') {
         if (!id) throw new Error('Missing id for server delete');
         const apiBase = (window.API_URL && String(window.API_URL)) || (isLocalDev ? 'http://localhost:3000' : '');
         if (!apiBase) throw new Error('Missing API base URL');
         const res = await fetch(`${apiBase}/api/quotes/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Server responded ' + res.status);
+      } else if (rowSource === 'local') {
+        removeLocalQuoteById(id, row);
       } else {
         throw new Error('No database source available');
       }

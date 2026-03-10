@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (function () {
+        var host = window.location.hostname || '';
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        if (window.location.protocol === 'http:' && host && !isLocal) {
+          window.location.replace('https://' + host + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <title>Norge Signs Admin - Settings</title>
+    <link rel="icon" href="../favicons/favicon.ico" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="../css/admin-portal.css" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --subpanel: #0b1220;
+        --border: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #06b6d4;
+        --danger: #ef4444;
+        --success: #22c55e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top right, #13223c, #0f172a 46%);
+        color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      .hidden { display: none !important; }
+      .center {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+      .wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+      .subpanel {
+        background: var(--subpanel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+      }
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: 17px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn-link,
+      button {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: #0f172a;
+        color: var(--text);
+        text-decoration: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn-link { display: inline-flex; align-items: center; }
+      button.primary {
+        background: var(--accent);
+        color: #073238;
+        border-color: #0891b2;
+      }
+      button.danger {
+        background: var(--danger);
+        color: #fff;
+        border-color: #7f1d1d;
+      }
+      button.ghost {
+        background: transparent;
+      }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid #334155;
+        background: #020617;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 9px 10px;
+        outline: none;
+        font: inherit;
+      }
+      input:focus, select:focus, textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+      }
+      textarea {
+        min-height: 92px;
+        resize: vertical;
+      }
+      .grid-2 {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field label {
+        color: #cbd5e1;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .source-list {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+      }
+      .source-item {
+        border: 1px solid var(--border);
+        background: #0a1325;
+        border-radius: 10px;
+        padding: 10px;
+      }
+      .source-item.active {
+        border-color: #22d3ee;
+        box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+      }
+      .source-item h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .source-item p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      .source-item .item-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .source-item .item-actions button {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      .qr-preview {
+        margin-top: 8px;
+      }
+      .qr-preview img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+      .helper {
+        margin-top: 8px;
+        background: #0a1325;
+        border: 1px dashed #334155;
+        border-radius: 8px;
+        padding: 9px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      .settings-feature-grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .settings-feature-card {
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 14px;
+        padding: 15px;
+        text-align: left;
+        background: linear-gradient(150deg, rgba(6, 13, 30, 0.95), rgba(17, 35, 64, 0.92));
+        color: #e2ecff;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .settings-feature-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(34, 211, 238, 0.6);
+        box-shadow: 0 14px 28px rgba(1, 12, 32, 0.45);
+      }
+      .settings-feature-card .icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        color: #041b36;
+        background: linear-gradient(135deg, #67e8f9, #22d3ee);
+      }
+      .settings-feature-card h3 {
+        margin: 0 0 6px;
+        font-size: 1.06rem;
+      }
+      .settings-feature-card p {
+        margin: 0;
+        color: #a9c7e9;
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
+      .settings-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 4500;
+        display: grid;
+        place-items: center;
+      }
+      .settings-modal[hidden] {
+        display: none !important;
+      }
+      .settings-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 8, 23, 0.78);
+        backdrop-filter: blur(4px);
+      }
+      .settings-modal-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(980px, calc(100vw - 24px));
+        max-height: calc(100vh - 24px);
+        overflow: auto;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-radius: 14px;
+        background: linear-gradient(150deg, #111827, #0a1427);
+        box-shadow: 0 24px 46px rgba(0, 0, 0, 0.45);
+        padding: 14px;
+      }
+      .settings-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .settings-modal-head h2 {
+        margin: 0;
+      }
+      .settings-modal-close {
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        font-size: 1.05rem;
+        cursor: pointer;
+      }
+      .ok { color: var(--success); }
+      .error { color: #fca5a5; }
+      @media (max-width: 1060px) {
+        .grid-2 { grid-template-columns: 1fr; }
+        .settings-feature-grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 700px) {
+        .field-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body class="admin-portal">
+    <main id="authGate" class="center">
+      <section class="panel" style="max-width: 560px; width: 92vw;">
+        <h1>Admin Login Required</h1>
+        <p class="muted" style="margin-top: 8px;">Please log in from the admin dashboard before opening settings.</p>
+        <div class="actions" style="margin-top: 12px;">
+          <a class="btn-link" href="./index.html">Go to Admin Login</a>
+          <a class="btn-link" href="../index.html">Go to Site</a>
+        </div>
+      </section>
+    </main>
+
+    <main id="settingsApp" class="wrap hidden">
+      <header class="admin-toolbar">
+        <div class="admin-toolbar-inner">
+          <a class="admin-brand" href="./index.html" aria-label="Admin Dashboard Home">
+            <span class="admin-brand-icon"><i class="bi bi-stars"></i></span>
+            <span>Admin Control</span>
+          </a>
+          <nav class="admin-nav" aria-label="Admin Pages">
+            <a class="admin-nav-link" href="./index.html"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
+            <a class="admin-nav-link" href="./customers.html"><i class="bi bi-people-fill"></i><span>Customers</span></a>
+            <a class="admin-nav-link" href="./traffic.html"><i class="bi bi-graph-up-arrow"></i><span>Traffic</span></a>
+            <a class="admin-nav-link" href="./settings.html"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
+          </nav>
+          <div class="admin-toolbar-actions">
+            <span class="admin-toolbar-user" id="adminToolbarUser">Admin</span>
+            <button class="admin-toolbar-btn danger" type="button" data-admin-logout>
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="topbar">
+          <div>
+            <h1>Admin Settings Center</h1>
+            <div id="settingsStatus" class="muted">Loading admin settings...</div>
+          </div>
+          <div class="actions">
+            <button id="refreshSettingsBtn" class="primary" type="button">Refresh</button>
+            <a class="btn-link" href="../index.html">Go to Site</a>
+          </div>
+        </div>
+
+        <div class="settings-feature-grid">
+          <button class="settings-feature-card" type="button" data-settings-modal-open="passwordModal">
+            <span class="icon"><i class="bi bi-shield-lock-fill"></i></span>
+            <h3>Change Password</h3>
+            <p>Open a secure password prompt and update your admin credentials.</p>
+          </button>
+          <button class="settings-feature-card" type="button" data-settings-modal-open="defaultsModal">
+            <span class="icon"><i class="bi bi-sliders2-vertical"></i></span>
+            <h3>Payment Defaults</h3>
+            <p>Control default payment source, notification email, and standard quote/footer text.</p>
+          </button>
+          <button class="settings-feature-card" type="button" data-settings-modal-open="sourcesModal">
+            <span class="icon"><i class="bi bi-wallet2"></i></span>
+            <h3>Manage Payment Sources</h3>
+            <p>Attach payment details and QR images to each source in one central popup.</p>
+          </button>
+          <button class="settings-feature-card" type="button" data-settings-modal-open="utilitiesModal">
+            <span class="icon"><i class="bi bi-database-fill-gear"></i></span>
+            <h3>Data Utilities</h3>
+            <p>Export admin data, clear local cache, and inspect session/source diagnostics.</p>
+          </button>
+        </div>
+      </section>
+
+      <section class="settings-modal" id="passwordModal" hidden>
+        <div class="settings-modal-backdrop" data-settings-modal-close></div>
+        <div class="settings-modal-dialog">
+          <div class="settings-modal-head">
+            <h2>Change Password</h2>
+            <button class="settings-modal-close" type="button" aria-label="Close" data-settings-modal-close>&times;</button>
+          </div>
+          <form id="passwordForm" class="subpanel">
+            <div class="field">
+              <label for="currentPassword">Current Password</label>
+              <input id="currentPassword" type="password" required />
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="newPassword">New Password</label>
+              <input id="newPassword" type="password" minlength="8" required />
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="confirmPassword">Confirm New Password</label>
+              <input id="confirmPassword" type="password" minlength="8" required />
+            </div>
+            <div class="actions" style="margin-top: 10px;">
+              <button id="changePasswordBtn" class="primary" type="submit">Change Password</button>
+            </div>
+          </form>
+          <div class="helper">Use at least 8 characters. A mix of uppercase, lowercase, number, and symbol is recommended.</div>
+        </div>
+      </section>
+
+      <section class="settings-modal" id="defaultsModal" hidden>
+        <div class="settings-modal-backdrop" data-settings-modal-close></div>
+        <div class="settings-modal-dialog">
+          <div class="settings-modal-head">
+            <h2>Business Payment Defaults</h2>
+            <button class="settings-modal-close" type="button" aria-label="Close" data-settings-modal-close>&times;</button>
+          </div>
+          <form id="paymentDefaultsForm" class="subpanel">
+            <div class="field-grid">
+              <div class="field">
+                <label for="notifyEmail">Notification Email</label>
+                <input id="notifyEmail" type="text" placeholder="floridasignsolution@gmail.com" />
+              </div>
+              <div class="field">
+                <label for="preferredSourceId">Preferred Payment Source</label>
+                <select id="preferredSourceId"></select>
+              </div>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="quotePrefix">Default Quote Intro</label>
+              <textarea id="quotePrefix" placeholder="Thanks for contacting Florida Sign Solution..."></textarea>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="footerNote">Default Footer Note</label>
+              <textarea id="footerNote" placeholder="Licensed & insured | FL License..."></textarea>
+            </div>
+            <div class="actions" style="margin-top: 10px;">
+              <button id="saveDefaultsBtn" class="primary" type="submit">Save Defaults</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="settings-modal" id="sourcesModal" hidden>
+        <div class="settings-modal-backdrop" data-settings-modal-close></div>
+        <div class="settings-modal-dialog">
+          <div class="settings-modal-head">
+            <h2>Global Payment Sources</h2>
+            <button class="settings-modal-close" type="button" aria-label="Close" data-settings-modal-close>&times;</button>
+          </div>
+          <div class="grid-2" style="margin-top: 0;">
+            <section class="subpanel">
+              <div class="topbar">
+                <h2 style="margin: 0;">Source Library</h2>
+                <div class="actions">
+                  <button id="showPaymentSourceEditorBtn" class="primary" type="button">Add Source</button>
+                </div>
+              </div>
+              <div id="paymentSourcesList" class="source-list"></div>
+            </section>
+
+            <section id="paymentSourceEditorWrap" class="subpanel hidden">
+              <div class="topbar">
+                <h2 id="paymentSourceEditorTitle" style="margin: 0;">Add Payment Source</h2>
+                <div class="actions">
+                  <button id="cancelPaymentSourceEditorBtn" class="ghost" type="button">Close</button>
+                </div>
+              </div>
+              <form id="paymentSourceForm">
+                <input id="paymentSourceId" type="hidden" />
+                <input id="paymentSourceQrData" type="hidden" />
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="paymentSourceName">Source Name</label>
+                    <input id="paymentSourceName" type="text" placeholder="Venmo / Zelle / Cash App / Other" />
+                  </div>
+                  <div class="field">
+                    <label for="paymentSourceType">Source Type</label>
+                    <select id="paymentSourceType">
+                      <option value="venmo">Venmo</option>
+                      <option value="zelle">Zelle</option>
+                      <option value="cashapp">Cash App</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="paymentSourceLookupValue">Find Me As (Handle / Number / Email)</label>
+                  <input id="paymentSourceLookupValue" type="text" placeholder="@floridasigns or phone/email customers should type to find you" />
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="paymentSourceDetails">Payment Details</label>
+                  <textarea id="paymentSourceDetails" placeholder="@handle, phone, email, instructions..."></textarea>
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="paymentSourceQrFile">QR Code Image</label>
+                  <input id="paymentSourceQrFile" type="file" accept="image/*" />
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="paymentSourceQrPublicUrl">QR Public Image URL (for customer payment page/Lens)</label>
+                  <input id="paymentSourceQrPublicUrl" type="url" placeholder="https://... (optional, recommended for Lens)" />
+                </div>
+                <div id="paymentSourceQrPreview" class="qr-preview hidden">
+                  <img id="paymentSourceQrPreviewImage" alt="Payment source QR preview" />
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="paymentSourceEmailTemplate">Payment Email Template Override (optional)</label>
+                  <textarea id="paymentSourceEmailTemplate" placeholder="Optional source-specific email text"></textarea>
+                </div>
+                <div class="field" style="margin-top: 10px;">
+                  <label for="paymentSourceSmsTemplate">Payment SMS Template Override (optional)</label>
+                  <textarea id="paymentSourceSmsTemplate" placeholder="Optional source-specific SMS text"></textarea>
+                </div>
+                <div class="actions">
+                  <button id="savePaymentSourceBtn" class="primary" type="submit">Save Payment Source</button>
+                  <button id="clearPaymentSourceBtn" class="ghost" type="button">Clear</button>
+                  <button id="deletePaymentSourceBtn" class="danger" type="button">Delete Source</button>
+                </div>
+                <div class="helper">
+Default context is auto-filled here. What you save in this section is what customer actions trigger.
+Available tokens: {{name}} {{quotedPrice}} {{paymentLookupValue}} {{paymentDetails}} {{paymentQrInfo}} {{paymentPageUrl}} {{today}}
+                </div>
+              </form>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-modal" id="utilitiesModal" hidden>
+        <div class="settings-modal-backdrop" data-settings-modal-close></div>
+        <div class="settings-modal-dialog">
+          <div class="settings-modal-head">
+            <h2>Data Utilities</h2>
+            <button class="settings-modal-close" type="button" aria-label="Close" data-settings-modal-close>&times;</button>
+          </div>
+          <div class="grid-2" style="margin-top: 0;">
+            <section class="subpanel">
+              <div class="actions">
+                <button id="exportAdminDataBtn" type="button">Export Admin Data (JSON)</button>
+                <button id="clearLocalCacheBtn" class="danger" type="button">Clear Local Cache</button>
+              </div>
+              <div class="helper" id="utilitiesInfo">Use export before major changes so you always have a backup snapshot.</div>
+            </section>
+            <section class="subpanel">
+              <h2>Session Snapshot</h2>
+              <div class="helper" id="sessionInfo"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/admin-toolbar.js"></script>
+    <script src="../js/admin-settings.js"></script>
+  </body>
+</html>

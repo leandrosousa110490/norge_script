@@ -356,7 +356,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Local fallback if server is disabled (GitHub Pages) or unreachable
     try {
       const existing = JSON.parse(localStorage.getItem('quoteRequests') || '[]');
-      existing.push(payload);
+      const localPayload = Object.assign({}, payload, {
+        id: String(payload.id || ('local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8)))
+      });
+      existing.push(localPayload);
       localStorage.setItem('quoteRequests', JSON.stringify(existing));
 
       if (reason && String(reason.code || '').toLowerCase() === 'permission-denied') {
@@ -380,6 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
   async function processQuoteRequest(details) {
     const db = await initFirestore();
     const payload = {
+      id: 'local-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
       ...details,
       page: window.location.pathname || 'index.html',
       url: window.location.href,
