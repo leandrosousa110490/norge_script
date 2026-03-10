@@ -286,10 +286,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   async function submitQuoteViaFallback(payload, reason) {
-    // Detect GitHub Pages and decide whether to use server fallback
-    const isGitHubPages = /github\.io$/.test(window.location.hostname);
-    const apiUrl = window.API_URL || 'http://localhost:3000/api/quote';
-    const canUseServer = !isGitHubPages && !!apiUrl;
+    // Use server fallback only in local dev or when API_URL is explicitly provided.
+    const host = String(window.location.hostname || '').toLowerCase();
+    const isLocalDev = host === 'localhost' || host === '127.0.0.1';
+    const apiUrl = window.API_URL || (isLocalDev ? 'http://localhost:3000/api/quote' : '');
+    const canUseServer = !!apiUrl;
 
     if (canUseServer) {
       try {
@@ -319,8 +320,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (reason && String(reason.code || '').toLowerCase() === 'permission-denied') {
         showToast('Saved locally because Firebase write is blocked by rules.', 'warning');
       } else {
-        const hint = isGitHubPages
-          ? 'Saved locally. Configure Firebase Web SDK for GitHub Pages to enable sending.'
+        const hint = !isLocalDev
+          ? 'Saved locally. Configure Firebase Web SDK rules/auth for live sending.'
           : 'Saved locally. Configure Firebase or start server to enable sending.';
         showToast(hint, 'warning');
       }

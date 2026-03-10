@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (function () {
+        var host = window.location.hostname || '';
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        if (window.location.protocol === 'http:' && host && !isLocal) {
+          window.location.replace('https://' + host + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <title>Norge Signs Admin - Customers</title>
+    <link rel="icon" href="../favicons/favicon.ico" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --subpanel: #0b1220;
+        --border: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #06b6d4;
+        --danger: #ef4444;
+        --success: #22c55e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top right, #12233f, #0f172a 45%);
+        color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      .hidden { display: none !important; }
+      .center {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+      .wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+      .subpanel {
+        background: var(--subpanel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+      }
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: 17px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn-link,
+      button {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: #0f172a;
+        color: var(--text);
+        text-decoration: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn-link { display: inline-flex; align-items: center; }
+      button.primary {
+        background: var(--accent);
+        color: #073238;
+        border-color: #0891b2;
+      }
+      button.danger {
+        background: var(--danger);
+        color: #fff;
+        border-color: #7f1d1d;
+      }
+      button.ghost {
+        background: transparent;
+      }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid #334155;
+        background: #020617;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 9px 10px;
+        outline: none;
+        font: inherit;
+      }
+      input:focus, select:focus, textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+      }
+      textarea {
+        min-height: 92px;
+        resize: vertical;
+      }
+      .grid-2 {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field label {
+        color: #cbd5e1;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+      .table-wrap {
+        margin-top: 12px;
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th, td {
+        text-align: left;
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        color: #cbd5e1;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        padding: 2px 9px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .pill.paid {
+        color: #14532d;
+        background: #86efac;
+      }
+      .pill.not-paid {
+        color: #7f1d1d;
+        background: #fecaca;
+      }
+      .row-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .row-actions button {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      .name-btn {
+        background: transparent;
+        border: none;
+        color: #93c5fd;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .name-btn:hover { text-decoration: none; }
+      .source-list {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+      }
+      .source-item {
+        border: 1px solid var(--border);
+        background: #0a1325;
+        border-radius: 10px;
+        padding: 10px;
+      }
+      .source-item.active {
+        border-color: #22d3ee;
+        box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+      }
+      .source-item h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .source-item p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      .source-item .item-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .source-item .item-actions button {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      .qr-preview {
+        margin-top: 8px;
+      }
+      .qr-preview img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+      .helper {
+        margin-top: 8px;
+        background: #0a1325;
+        border: 1px dashed #334155;
+        border-radius: 8px;
+        padding: 9px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+      .ok { color: var(--success); }
+      .error { color: #fca5a5; }
+      @media (max-width: 1060px) {
+        .grid-2 { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 700px) {
+        .field-grid { grid-template-columns: 1fr; }
+        .row-actions { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="authGate" class="center">
+      <section class="panel" style="max-width: 560px; width: 92vw;">
+        <h1>Admin Login Required</h1>
+        <p class="muted" style="margin-top: 8px;">Please log in from the admin dashboard before opening customer tools.</p>
+        <div class="actions" style="margin-top: 12px;">
+          <a class="btn-link" href="./index.html">Go to Admin Login</a>
+          <a class="btn-link" href="../index.html">Go to Site</a>
+        </div>
+      </section>
+    </main>
+
+    <main id="customersApp" class="wrap hidden">
+      <section class="panel">
+        <div class="topbar">
+          <div>
+            <h1>Customer CRM + Payment Requests</h1>
+            <div id="customersStatus" class="muted">Loading customer workspace...</div>
+          </div>
+          <div class="actions">
+            <button id="refreshCustomersBtn" class="primary" type="button">Refresh</button>
+            <a class="btn-link" href="./index.html">Quotes Dashboard</a>
+            <a class="btn-link" href="./traffic.html">Traffic</a>
+            <a class="btn-link" href="../index.html">Go to Site</a>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <section class="subpanel">
+            <h2>Customer Information</h2>
+            <form id="customerForm">
+              <input id="customerId" type="hidden" />
+              <div class="field-grid">
+                <div class="field">
+                  <label for="customerName">Customer Name</label>
+                  <input id="customerName" type="text" required />
+                </div>
+                <div class="field">
+                  <label for="customerPhone">Phone Number</label>
+                  <input id="customerPhone" type="text" />
+                </div>
+                <div class="field">
+                  <label for="customerEmail">Email Address</label>
+                  <input id="customerEmail" type="text" />
+                </div>
+                <div class="field">
+                  <label for="customerQuotedPrice">Quoted Price (USD)</label>
+                  <input id="customerQuotedPrice" type="number" min="0" step="0.01" />
+                </div>
+                <div class="field">
+                  <label for="customerPaidStatus">Payment Status</label>
+                  <select id="customerPaidStatus">
+                    <option value="not_paid">Not Paid</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="margin-top: 10px;">
+                <label for="customerNotes">Notes</label>
+                <textarea id="customerNotes" placeholder="Project scope, due dates, install location, permit notes..."></textarea>
+              </div>
+              <div class="actions">
+                <button id="saveCustomerBtn" class="primary" type="submit">Save Customer</button>
+                <button id="clearCustomerBtn" class="ghost" type="button">New Customer</button>
+                <button id="deleteCustomerBtn" class="danger" type="button">Delete Customer</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="subpanel">
+            <h2>Send Quote / Payment Request</h2>
+            <div class="field-grid">
+              <div class="field">
+                <label for="selectedPaymentSource">Payment Source for Request</label>
+                <select id="selectedPaymentSource"></select>
+              </div>
+              <div class="field">
+                <label for="paymentSourcePreview">Selected Source Details</label>
+                <textarea id="paymentSourcePreview" readonly></textarea>
+              </div>
+            </div>
+            <div class="qr-preview" id="paymentSourceQrPreview" hidden>
+              <img id="paymentSourceQrImage" alt="Payment source QR code" />
+            </div>
+            <div class="actions" style="margin-top: 10px;">
+              <button id="sendQuoteEmailBtn" type="button">Send Quote Email</button>
+              <button id="sendQuoteSmsBtn" type="button">Send Quote SMS</button>
+              <button id="sendPaymentEmailBtn" type="button">Send Payment Email</button>
+              <button id="sendPaymentSmsBtn" type="button">Send Payment SMS</button>
+            </div>
+            <p class="muted" style="margin-top: 8px;">
+              Sends through your default email/SMS app with prefilled content. Select a customer first.
+            </p>
+
+            <div class="field-grid" style="margin-top: 10px;">
+              <div class="field">
+                <label for="quoteEmailSubject">Quote Email Subject Template</label>
+                <input id="quoteEmailSubject" type="text" />
+              </div>
+              <div class="field">
+                <label for="paymentEmailSubject">Payment Email Subject Template</label>
+                <input id="paymentEmailSubject" type="text" />
+              </div>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="quoteEmailBody">Quote Email Body Template</label>
+              <textarea id="quoteEmailBody"></textarea>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="quoteSmsBody">Quote SMS Template</label>
+              <textarea id="quoteSmsBody"></textarea>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="paymentEmailBody">Payment Email Body Template (fallback)</label>
+              <textarea id="paymentEmailBody"></textarea>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="paymentSmsBody">Payment SMS Template (fallback)</label>
+              <textarea id="paymentSmsBody"></textarea>
+            </div>
+            <div class="actions" style="margin-top: 10px;">
+              <button id="saveTemplatesBtn" class="primary" type="button">Save Templates</button>
+            </div>
+            <div class="helper">
+Available template tokens:
+{{name}} {{email}} {{phone}} {{quotedPrice}} {{paymentStatus}} {{notes}} {{paymentMethodName}} {{paymentMethodType}} {{paymentDetails}} {{today}}
+            </div>
+          </section>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+          <section class="subpanel">
+            <h2>Payment Sources (Venmo, Zelle, Other)</h2>
+            <form id="paymentSourceForm">
+              <input id="paymentSourceId" type="hidden" />
+              <input id="paymentSourceQrData" type="hidden" />
+              <div class="field-grid">
+                <div class="field">
+                  <label for="paymentSourceName">Source Name</label>
+                  <input id="paymentSourceName" type="text" placeholder="Venmo / Zelle / Cash App / Other" />
+                </div>
+                <div class="field">
+                  <label for="paymentSourceType">Source Type</label>
+                  <select id="paymentSourceType">
+                    <option value="venmo">Venmo</option>
+                    <option value="zelle">Zelle</option>
+                    <option value="cashapp">Cash App</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="margin-top: 10px;">
+                <label for="paymentSourceDetails">Payment Details</label>
+                <textarea id="paymentSourceDetails" placeholder="@handle, phone, email, instructions..."></textarea>
+              </div>
+              <div class="field" style="margin-top: 10px;">
+                <label for="paymentSourceQrFile">QR Code Image</label>
+                <input id="paymentSourceQrFile" type="file" accept="image/*" />
+              </div>
+              <div class="field" style="margin-top: 10px;">
+                <label for="paymentSourceEmailTemplate">Payment Email Template Override (optional)</label>
+                <textarea id="paymentSourceEmailTemplate" placeholder="If set, this overrides fallback payment email template."></textarea>
+              </div>
+              <div class="field" style="margin-top: 10px;">
+                <label for="paymentSourceSmsTemplate">Payment SMS Template Override (optional)</label>
+                <textarea id="paymentSourceSmsTemplate" placeholder="If set, this overrides fallback payment SMS template."></textarea>
+              </div>
+              <div class="actions">
+                <button id="savePaymentSourceBtn" class="primary" type="submit">Save Payment Source</button>
+                <button id="clearPaymentSourceBtn" class="ghost" type="button">New Source</button>
+                <button id="deletePaymentSourceBtn" class="danger" type="button">Delete Source</button>
+              </div>
+            </form>
+            <div id="paymentSourcesList" class="source-list"></div>
+          </section>
+
+          <section class="subpanel">
+            <h2>Customers</h2>
+            <div class="table-wrap">
+              <table aria-label="Customer list">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Quote</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customersTableBody"></tbody>
+              </table>
+            </div>
+            <p id="customersEmpty" class="muted">No customers yet. Use the form to create one.</p>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/admin-customers.js"></script>
+  </body>
+  </html>

@@ -6,6 +6,12 @@
     <title>Page Not Found</title>
     <script>
       (function () {
+        var host = window.location.hostname || '';
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        if (window.location.protocol === 'http:' && host && !isLocal) {
+          window.location.replace('https://' + host + window.location.pathname + window.location.search + window.location.hash);
+          return;
+        }
         var path = (window.location.pathname || '').replace(/\/+$/, '');
         if (path.toLowerCase().endsWith('/admin')) {
           window.location.replace(path + '/');

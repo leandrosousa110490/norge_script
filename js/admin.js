@@ -374,7 +374,9 @@
   }
 
   // ---------- Quote fetching and rendering ----------
-  const isGitHubPages = /github\.io$/.test(window.location.hostname) || !!document.querySelector('link[rel="canonical"][href*="floridasignsolution.com"]');
+  const host = String(window.location.hostname || '').toLowerCase();
+  const isLocalDev = host === 'localhost' || host === '127.0.0.1';
+  const isGitHubPages = /github\.io$/.test(host) || !!document.querySelector('link[rel="canonical"][href*="floridasignsolution.com"]');
 
   async function fetchFromFirestore() {
     try {
@@ -393,7 +395,8 @@
   }
   async function fetchFromServer() {
     if (isGitHubPages) return null;
-    const apiUrl = (window.API_URL && String(window.API_URL)) || 'http://localhost:3000/api/quotes';
+    const apiUrl = (window.API_URL && String(window.API_URL)) || (isLocalDev ? 'http://localhost:3000/api/quotes' : '');
+    if (!apiUrl) return null;
     try {
       const res = await fetch(apiUrl);
       if (!res.ok) throw new Error('Server responded ' + res.status);
@@ -859,7 +862,8 @@
         await db.collection('quoteRequests').doc(id).delete();
       } else if (activeSource === 'server') {
         if (!id) throw new Error('Missing id for server delete');
-        const apiBase = (window.API_URL && String(window.API_URL)) || 'http://localhost:3000';
+        const apiBase = (window.API_URL && String(window.API_URL)) || (isLocalDev ? 'http://localhost:3000' : '');
+        if (!apiBase) throw new Error('Missing API base URL');
         const res = await fetch(`${apiBase}/api/quotes/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Server responded ' + res.status);
       } else {

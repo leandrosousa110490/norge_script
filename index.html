@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      (function () {
+        var host = window.location.hostname || '';
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        if (window.location.protocol === 'http:' && host && !isLocal) {
+          window.location.replace('https://' + host + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
     
     <!-- Primary Meta Tags -->
     <title>Miami Sign Company | Custom Signs, Installation & Repair in Florida</title>
@@ -356,7 +365,7 @@
                     <div class="hero-animation text-center">
                         <div class="sign-icon-container hero-animate">
                             <div class="glow-effect"></div>
-                            <img src="images/logo2.PNG" alt="Florida Sign Solution Logo" class="img-fluid sign-icon" style="max-width: 80%;">
+                            <img src="images/logo2.png" alt="Florida Sign Solution Logo" class="img-fluid sign-icon" style="max-width: 80%;">
                         </div>
                     </div>
                 </div>

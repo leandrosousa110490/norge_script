@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      (function () {
+        var host = window.location.hostname || '';
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        if (window.location.protocol === 'http:' && host && !isLocal) {
+          window.location.replace('https://' + host + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
     
     <!-- Primary Meta Tags -->
     <title>Sign Installation, Repair & Design Services in Miami | Florida Sign Solution</title>
