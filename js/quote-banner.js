@@ -85,7 +85,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const style = document.createElement('style');
     style.id = 'quote-modal-styles';
     style.textContent = `
-      .quote-modal-overlay{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%,rgba(15,123,255,.26),rgba(0,0,0,.76));backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1050;padding:14px}
+      html.quote-modal-open,body.quote-modal-open{overflow:hidden !important}
+      body.quote-modal-open .page-preloader{display:none !important}
+      .quote-modal-overlay{position:fixed !important;top:0 !important;right:0 !important;bottom:0 !important;left:0 !important;inset:0 !important;background:radial-gradient(circle at 20% 20%,rgba(15,123,255,.26),rgba(0,0,0,.76));backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:2147483647 !important;isolation:isolate;padding:14px;padding-top:max(14px, env(safe-area-inset-top));padding-bottom:max(14px, env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch}
       .quote-modal-overlay.show{display:flex;animation:quoteModalFadeIn .24s ease-out both}
       .quote-modal-overlay.show .quote-modal{animation:quoteModalCardIn .28s cubic-bezier(.2,.8,.2,1) both}
       .quote-modal-overlay.is-closing{display:flex;animation:quoteModalFadeOut .2s ease-in both}
@@ -94,14 +96,18 @@ document.addEventListener('DOMContentLoaded', function () {
       @keyframes quoteModalFadeOut{from{opacity:1}to{opacity:0}}
       @keyframes quoteModalCardIn{from{transform:translateY(20px) scale(.96);opacity:.2}to{transform:translateY(0) scale(1);opacity:1}}
       @keyframes quoteModalCardOut{from{transform:translateY(0) scale(1);opacity:1}to{transform:translateY(16px) scale(.97);opacity:.1}}
-      .quote-modal{background:linear-gradient(170deg,#ffffff,#f4f9ff 62%,#eef5ff);width:min(620px,96vw);border-radius:18px;box-shadow:0 24px 48px rgba(0,0,0,.28);overflow:hidden;border:1px solid rgba(26,118,232,.22)}
-      .quote-modal-header{display:flex;align-items:flex-start;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(16,106,216,.16);background:linear-gradient(135deg,#0f7bff,#00b6ff)}
+      .quote-modal{background:linear-gradient(170deg,#ffffff,#f4f9ff 62%,#eef5ff);width:min(620px,96vw);height:min(92vh,760px);max-height:min(92vh,760px);border-radius:18px;box-shadow:0 24px 48px rgba(0,0,0,.28);overflow:hidden;border:1px solid rgba(26,118,232,.22);display:flex;flex-direction:column}
+      .quote-modal-header{display:flex;align-items:flex-start;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(16,106,216,.16);background:linear-gradient(135deg,#0f7bff,#00b6ff);position:sticky;top:0;z-index:2}
       .quote-modal-title-wrap{display:flex;align-items:flex-start;gap:10px;color:#fff}
       .quote-modal-title-icon{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.24);box-shadow:0 8px 20px rgba(6,48,102,.35)}
       .quote-modal-title-icon i{font-size:16px}
       .quote-modal-header h5{margin:0;color:#fff;font-size:1.04rem}
       .quote-modal-header p{margin:2px 0 0;font-size:.78rem;opacity:.92}
-      .quote-modal-body{padding:16px}
+      .quote-modal-form{display:flex;flex-direction:column;flex:1;min-height:0}
+      .quote-modal-body{padding:16px;overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain;scrollbar-gutter:stable both-edges}
+      .quote-modal-body::-webkit-scrollbar{width:10px}
+      .quote-modal-body::-webkit-scrollbar-track{background:rgba(9,64,132,.08)}
+      .quote-modal-body::-webkit-scrollbar-thumb{background:rgba(9,86,184,.42);border-radius:999px}
       .quote-modal-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
       .quote-modal-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(12,102,214,.2);background:rgba(255,255,255,.84);font-size:.74rem;font-weight:700;color:#17447a}
       .quote-modal form .form-label{font-weight:700;color:#214873;font-size:.88rem}
@@ -109,12 +115,31 @@ document.addEventListener('DOMContentLoaded', function () {
       .quote-modal .form-control:focus{border-color:rgba(15,123,255,.56);box-shadow:0 0 0 .2rem rgba(15,123,255,.16)}
       .quote-modal-close{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);font-size:22px;line-height:1;cursor:pointer;color:#fff}
       .quote-modal-close:hover{background:rgba(255,255,255,.32)}
-      .quote-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+      .quote-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:10px 16px;border-top:1px solid rgba(16,106,216,.14);background:linear-gradient(180deg,rgba(255,255,255,.72),#f8fbff);flex-shrink:0}
       .quote-modal-actions .btn{border-radius:999px;font-weight:700;padding:.54rem 1.05rem}
       #quoteSubmitBtn{background:linear-gradient(135deg,#0f7bff,#00b4ff);border:none;box-shadow:0 10px 18px rgba(7,70,153,.3)}
       #quoteSubmitBtn:hover{transform:translateY(-1px)}
       #quoteCancelBtn{border:1px solid rgba(12,82,171,.24)}
-      @media (max-width:576px){.quote-modal{width:96vw}.quote-modal-title-wrap{gap:8px}.quote-modal-chip{font-size:.7rem}}
+      @media (max-width:576px){
+        .quote-modal-overlay{padding:8px;align-items:flex-start;padding-top:max(8px, env(safe-area-inset-top));padding-bottom:max(8px, env(safe-area-inset-bottom))}
+        .quote-modal{width:100%;height:calc(100svh - 16px);height:calc(100dvh - 16px);max-height:calc(100svh - 16px);max-height:calc(100dvh - 16px);border-radius:14px;margin-top:0}
+        .quote-modal-header{padding:12px}
+        .quote-modal-body{padding:12px}
+        .quote-modal-title-wrap{gap:8px}
+        .quote-modal-chip{font-size:.7rem}
+        .quote-modal-chip-row{margin-bottom:10px}
+        .quote-modal form .mb-3{margin-bottom:.65rem !important}
+        #quoteMessage{min-height:88px}
+        .quote-modal-actions{padding:8px 12px}
+        .quote-modal-actions .btn{flex:1}
+      }
+      @media (max-width:576px) and (max-height:700px){
+        .quote-modal-title-icon{width:30px;height:30px}
+        .quote-modal-header h5{font-size:.96rem}
+        .quote-modal-header p{display:none}
+        .quote-modal-close{width:30px;height:30px;font-size:20px}
+        .quote-modal{height:calc(100svh - 16px);height:calc(100dvh - 16px)}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -142,13 +167,13 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>
           <button type="button" class="quote-modal-close" aria-label="Close">&times;</button>
         </div>
-        <div class="quote-modal-body">
-          <div class="quote-modal-chip-row">
-            <span class="quote-modal-chip"><i class="bi bi-lightning-fill"></i> Fast response</span>
-            <span class="quote-modal-chip"><i class="bi bi-shield-check"></i> Licensed & insured</span>
-            <span class="quote-modal-chip"><i class="bi bi-building-check"></i> Florida-wide service</span>
-          </div>
-          <form id="quoteForm">
+        <form id="quoteForm" class="quote-modal-form">
+          <div class="quote-modal-body">
+            <div class="quote-modal-chip-row">
+              <span class="quote-modal-chip"><i class="bi bi-lightning-fill"></i> Fast response</span>
+              <span class="quote-modal-chip"><i class="bi bi-shield-check"></i> Licensed & insured</span>
+              <span class="quote-modal-chip"><i class="bi bi-building-check"></i> Florida-wide service</span>
+            </div>
             <div class="mb-3">
               <label for="quoteName" class="form-label">Name</label>
               <input type="text" id="quoteName" class="form-control" placeholder="Your name" required>
@@ -171,12 +196,12 @@ document.addEventListener('DOMContentLoaded', function () {
               <small class="form-text text-muted">We store compressed images directly in the database, not Storage.</small>
               <div id="quoteImagesError" class="form-text" style="color:#dc2626; display:none;">Please select up to 3 images.</div>
             </div>
-            <div class="quote-modal-actions">
-              <button type="button" class="btn btn-secondary" id="quoteCancelBtn">Cancel</button>
-              <button type="submit" class="btn btn-primary" id="quoteSubmitBtn">Send Request</button>
-            </div>
-          </form>
-        </div>
+          </div>
+          <div class="quote-modal-actions">
+            <button type="button" class="btn btn-secondary" id="quoteCancelBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="quoteSubmitBtn">Send Request</button>
+          </div>
+        </form>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -217,16 +242,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function openQuoteModal() {
     const overlay = ensureQuoteModal();
+    // Keep modal as the top-most layer, above sticky headers and any stale overlays.
+    document.body.appendChild(overlay);
+    overlay.style.setProperty('position', 'fixed', 'important');
+    overlay.style.setProperty('top', '0', 'important');
+    overlay.style.setProperty('right', '0', 'important');
+    overlay.style.setProperty('bottom', '0', 'important');
+    overlay.style.setProperty('left', '0', 'important');
+    overlay.style.setProperty('z-index', '2147483647', 'important');
     if (overlay._closeTimer) {
       clearTimeout(overlay._closeTimer);
       overlay._closeTimer = null;
     }
     overlay.classList.remove('is-closing');
     overlay.classList.add('show');
+    document.documentElement.classList.add('quote-modal-open');
+    document.body.classList.add('quote-modal-open');
     document.body.style.overflow = 'hidden';
-    // Autofocus name field for convenience
+    // Always open at the top so header/title is visible on small screens.
+    overlay.scrollTop = 0;
+    const bodyScroller = overlay.querySelector('.quote-modal-body');
+    if (bodyScroller) bodyScroller.scrollTop = 0;
+    // Autofocus on desktop only; mobile keyboard can obscure the modal header.
     const nameInput = overlay.querySelector('#quoteName');
-    if (nameInput) nameInput.focus();
+    const isSmallScreen = window.matchMedia('(max-width: 768px)').matches;
+    if (nameInput && !isSmallScreen) nameInput.focus();
   }
 
   function closeQuoteModal() {
@@ -240,6 +280,8 @@ document.addEventListener('DOMContentLoaded', function () {
       overlay.classList.remove('show', 'is-closing');
       overlay._closeTimer = null;
     }, 210);
+    document.documentElement.classList.remove('quote-modal-open');
+    document.body.classList.remove('quote-modal-open');
     document.body.style.overflow = '';
   }
 
