@@ -28,7 +28,9 @@
   let authWarmupErrorCode = '';
   let selectedRequest = null;
   const VIEWED_STORAGE_KEY = 'ADMIN_VIEWED_QUOTES';
+  const DISMISSED_STORAGE_KEY = 'ADMIN_DISMISSED_QUOTES';
   let viewedRequestIds = loadViewedRequestIds();
+  let dismissedRequestKeys = loadDismissedRequestKeys();
 
   function loadViewedRequestIds() {
     try {
@@ -42,6 +44,21 @@
   function saveViewedRequestIds() {
     try {
       localStorage.setItem(VIEWED_STORAGE_KEY, JSON.stringify(Array.from(viewedRequestIds)));
+    } catch (_) {}
+  }
+
+  function loadDismissedRequestKeys() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(DISMISSED_STORAGE_KEY) || '[]');
+      return new Set(Array.isArray(raw) ? raw.map((x) => String(x)) : []);
+    } catch (_) {
+      return new Set();
+    }
+  }
+
+  function saveDismissedRequestKeys() {
+    try {
+      localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(Array.from(dismissedRequestKeys)));
     } catch (_) {}
   }
 
@@ -848,6 +865,14 @@
     return [name, email, phone, timestamp, message].join('|');
   }
 
+  function getDismissKey(q) {
+    const id = getRequestId(q);
+    if (id) return 'id:' + id;
+    const fp = quoteFingerprint(q);
+    if (fp) return 'fp:' + fp;
+    return '';
+  }
+
   function mergeQuoteSources(firestoreRows, serverRows, localRows) {
     const map = new Map();
     const addRows = (rows, sourceName) => {
@@ -893,7 +918,10 @@
       const hasId = !!q && !!q.id; // ensure only DB docs
       const hasName = !!String(q?.name || '').trim();
       const hasContact = !!String(q?.email || '').trim() || !!String(q?.phone || '').trim();
-      return hasId && hasName && hasContact;
+      if (!hasId || !hasName || !hasContact) return false;
+      const dismissKey = getDismissKey(q);
+      if (dismissKey && dismissedRequestKeys.has(dismissKey)) return false;
+      return true;
     });
 
     lastQuotes = quotes;
@@ -996,11 +1024,34 @@
       const idKey = String(id || '').trim();
       if (idKey) {
         viewedRequestIds.delete(idKey);
+        dismissedRequestKeys.delete('id:' + idKey);
+        saveDismissedRequestKeys();
         saveViewedRequestIds();
       }
       quotesStatus.textContent = 'Deleted.';
     } catch (e) {
       console.warn('Delete failed:', e);
+      const code = String((e && (e.code || e.name || e.message)) || '').toLowerCase();
+      const canFallback =
+        code.includes('permission-denied') ||
+        code.includes('unauthenticated') ||
+        code.includes('missing or insufficient permissions') ||
+        code.includes('network') ||
+        code.includes('failed to fetch') ||
+        code.includes('connection refused');
+
+      removeLocalQuoteById(id, row);
+      const dismissKey = getDismissKey(row);
+      if (dismissKey) {
+        dismissedRequestKeys.add(dismissKey);
+        saveDismissedRequestKeys();
+        await loadQuoteRequests();
+        quotesStatus.textContent = canFallback
+          ? 'Deleted locally (cloud delete blocked by access rules).'
+          : 'Deleted from dashboard view.';
+        return;
+      }
+
       quotesStatus.textContent = 'Delete failed.';
       alert('Unable to delete this quote.');
     }

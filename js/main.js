@@ -351,6 +351,21 @@ function initEnhancedNavbar() {
         }
     }
 
+    const navList = container.querySelector('.navbar-nav');
+    if (navList) {
+        const hasHomeLink = !!navList.querySelector('a.nav-link[href="index.html"], a.nav-link[href="./index.html"], a.nav-link[href="/"], a.nav-link[href="/index.html"]');
+        if (!hasHomeLink) {
+            const homeItem = document.createElement('li');
+            homeItem.className = 'nav-item nav-home-item';
+            homeItem.innerHTML = [
+                '<a class="nav-link" href="index.html">',
+                '  <i class="bi bi-house-door-fill me-1"></i> Home',
+                '</a>'
+            ].join('');
+            navList.insertBefore(homeItem, navList.firstChild);
+        }
+    }
+
     if (!container.querySelector('.nav-command-center')) {
         const commandCenter = document.createElement('div');
         commandCenter.className = 'nav-command-center d-none d-lg-flex';
