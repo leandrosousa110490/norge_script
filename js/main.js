@@ -283,6 +283,7 @@ function initDynamicUI() {
     initEnhancedFooterContent();
     initScrollProgress();
     initDynamicPageShowcase();
+    initHeroInstallReel();
     initIconChipInteraction();
     initCardTilt();
     initCursorGlow();
@@ -819,6 +820,134 @@ function initIconChipInteraction() {
             chip.style.transform = '';
         });
     });
+}
+
+/**
+ * Runs the homepage installation video with timed image flashes every 2 seconds.
+ */
+function initHeroInstallReel() {
+    const shell = document.querySelector('[data-hero-install-shell]');
+    if (!shell) {
+        return;
+    }
+
+    const scenes = Array.prototype.slice.call(shell.querySelectorAll('[data-hero-scene]'));
+    const video = shell.querySelector('[data-hero-stage-video]');
+    const headlineNode = shell.querySelector('[data-hero-video-headline]');
+    const captionNode = shell.querySelector('[data-hero-video-caption]');
+    const statNode = shell.querySelector('[data-hero-video-stat]');
+    const focusNode = shell.querySelector('[data-hero-video-focus]');
+    const progressNode = shell.querySelector('[data-hero-video-progress]');
+    const runtimeNode = shell.querySelector('[data-hero-video-runtime]');
+    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const targetDurationSeconds = 9;
+    let activeIndex = 0;
+
+    if (!video || !scenes.length) {
+        return;
+    }
+
+    const formatRuntime = function(seconds) {
+        const safeSeconds = Math.max(0, Math.floor(seconds || 0));
+        const minutes = Math.floor(safeSeconds / 60);
+        const remainder = safeSeconds % 60;
+        return String(minutes).padStart(2, '0') + ':' + String(remainder).padStart(2, '0');
+    };
+
+    const updateRuntime = function() {
+        if (!runtimeNode) {
+            return;
+        }
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        const playbackRate = video.playbackRate || 1;
+        const displayCurrentTime = playbackRate > 0 ? (video.currentTime / playbackRate) : video.currentTime;
+        const displayDuration = playbackRate > 0 ? (duration / playbackRate) : duration;
+        runtimeNode.innerHTML = '<i class="bi bi-play-circle-fill"></i> ' + formatRuntime(displayCurrentTime) + ' / ' + formatRuntime(displayDuration);
+    };
+
+    const updateProgress = function() {
+        if (!progressNode) {
+            return;
+        }
+        const duration = Number.isFinite(video.duration) ? video.duration : 0;
+        const percent = duration > 0 ? (video.currentTime / duration) * 100 : 0;
+        progressNode.style.width = Math.max(0, Math.min(percent, 100)).toFixed(2) + '%';
+    };
+
+    const applyScene = function(index) {
+        const scene = scenes[index];
+        if (!scene) {
+            return;
+        }
+
+        activeIndex = index;
+
+        scenes.forEach(function(sceneNode, sceneIndex) {
+            sceneNode.classList.toggle('is-active', sceneIndex === index);
+        });
+
+        if (headlineNode) {
+            headlineNode.textContent = scene.getAttribute('data-headline') || '';
+        }
+        if (captionNode) {
+            captionNode.textContent = scene.getAttribute('data-caption') || '';
+        }
+        if (statNode) {
+            statNode.textContent = scene.getAttribute('data-stat') || '';
+        }
+        if (focusNode) {
+            focusNode.textContent = scene.getAttribute('data-focus') || '';
+        }
+    };
+
+    const syncSceneToVideo = function() {
+        const playbackRate = video.playbackRate || 1;
+        const adjustedCurrentTime = playbackRate > 0 ? (video.currentTime / playbackRate) : video.currentTime;
+        const nextIndex = Math.floor(Math.max(adjustedCurrentTime, 0) / 2) % scenes.length;
+        if (nextIndex !== activeIndex) {
+            applyScene(nextIndex);
+        }
+
+        updateProgress();
+        updateRuntime();
+    };
+
+    video.addEventListener('loadedmetadata', function() {
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+            video.playbackRate = video.duration / targetDurationSeconds;
+        }
+        updateRuntime();
+        updateProgress();
+        syncSceneToVideo();
+    });
+
+    video.addEventListener('timeupdate', syncSceneToVideo);
+    video.addEventListener('ended', function() {
+        applyScene(0);
+        updateProgress();
+        updateRuntime();
+    });
+
+    if (canHover) {
+        shell.addEventListener('pointermove', function(event) {
+            const bounds = shell.getBoundingClientRect();
+            const ratioX = (event.clientX - bounds.left) / bounds.width;
+            const ratioY = (event.clientY - bounds.top) / bounds.height;
+            const rotateY = ((ratioX - 0.5) * 6).toFixed(2);
+            const rotateX = ((0.5 - ratioY) * 5).toFixed(2);
+            shell.style.setProperty('--hero-shell-rotate-x', rotateX + 'deg');
+            shell.style.setProperty('--hero-shell-rotate-y', rotateY + 'deg');
+        }, { passive: true });
+
+        shell.addEventListener('pointerleave', function() {
+            shell.style.setProperty('--hero-shell-rotate-x', '0deg');
+            shell.style.setProperty('--hero-shell-rotate-y', '0deg');
+        });
+    }
+
+    applyScene(0);
+    updateRuntime();
+    updateProgress();
 }
 
 /**
