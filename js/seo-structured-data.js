@@ -11,6 +11,19 @@
     "/about.html": { name: "About Us", canonical: origin + "/about.html", type: "AboutPage" },
     "/contact.html": { name: "Contact", canonical: origin + "/contact.html", type: "ContactPage" }
   };
+  var serviceKeywords = [
+    "sign installation",
+    "sign repair",
+    "custom sign fabrication",
+    "sign design",
+    "commercial signs",
+    "storefront signs",
+    "channel letters",
+    "LED signs",
+    "sign maintenance",
+    "emergency sign repair",
+    "sign making"
+  ];
 
   var current = pageMap[pathname];
   if (!current) return;
@@ -29,6 +42,7 @@
     "@type": current.type,
     "name": document.title || ("Florida Sign Solution - " + current.name),
     "url": current.canonical,
+    "keywords": serviceKeywords.join(", "),
     "inLanguage": "en-US",
     "isPartOf": {
       "@type": "WebSite",
@@ -41,6 +55,58 @@
     }
   };
   appendJsonLd(webPagePayload);
+
+  appendJsonLd({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": origin + "/#organization",
+    "name": "Florida Sign Solution",
+    "url": origin + "/",
+    "logo": origin + "/images/logo2.png",
+    "telephone": "+17863932372",
+    "email": "floridasignsolution@gmail.com",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Miami",
+      "addressRegion": "FL",
+      "addressCountry": "US"
+    },
+    "areaServed": {
+      "@type": "State",
+      "name": "Florida"
+    },
+    "knowsAbout": serviceKeywords
+  });
+
+  appendJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": origin + "/#website",
+    "name": "Florida Sign Solution",
+    "url": origin + "/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": origin + "/services.html?query={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  });
+
+  appendJsonLd({
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": current.canonical + "#sign-services",
+    "name": "Commercial Sign Services",
+    "serviceType": "Sign Installation, Sign Repair, and Custom Sign Making",
+    "provider": {
+      "@id": origin + "/#organization"
+    },
+    "areaServed": {
+      "@type": "State",
+      "name": "Florida"
+    },
+    "url": current.canonical,
+    "keywords": serviceKeywords.join(", ")
+  });
 
   var breadcrumbItems = [
     {
